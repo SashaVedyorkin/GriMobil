@@ -8,14 +8,16 @@
 
 const byte ch1Pin = 2;
 const byte ch2Pin = 3;
+const byte ch3Pin = 4;
 
 unsigned long ch1 = 1500;
 unsigned long ch2 = 1500;
+unsigned long ch3 = 1500;
 
 SerialController serialMonitor;
 DisplayController display;
 EscController esc(9);
-RcInputController rcInput(ch1Pin, ch2Pin);
+RcInputController rcInput(ch1Pin, ch2Pin, ch3Pin);
 RcSignalValidator rcSignalValidator;
 
 
@@ -41,6 +43,7 @@ void loop() {
 
   ch1 = rcState.ch1;
   ch2 = rcState.ch2;
+  ch3 = rcState.ch3;
 
   EscUpdateResult escResult = esc.update(ch1);
   if (escResult.isSuccess) {
@@ -49,7 +52,7 @@ void loop() {
     serialMonitor.logLine(escResult.message);
   }
 
-  display.renderChannels(ch1, percent1, ch2, percent2, escResult.message);
+  display.renderChannels(ch1, ch2, ch3, escResult.message);
 
   delay(20);
 }
