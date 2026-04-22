@@ -2,10 +2,12 @@
 #include <Wire.h>
 #include "AppConfig.h"
 #include "DisplayController.h"
+#include "DriveController.h"
 #include "EscController.h"
 #include "RcInputController.h"
 #include "RcSignalValidator.h"
 #include "SerialController.h"
+#include "SteeringController.h"
 
 const byte ch1Pin = AppConfig::Pins::kChannel1;
 const byte ch2Pin = AppConfig::Pins::kChannel2;
@@ -17,10 +19,15 @@ unsigned long ch3 = AppConfig::Rc::kDefaultPulseInMicroSec;
 
 SerialController serialMonitor;
 DisplayController display;
+DriveController drive;
 EscController esc(AppConfig::Pins::kEscSignal);
+SteeringController steering(AppConfig::Pins::kSteeringSignal);
 RcInputController rcInput(ch1Pin, ch2Pin, ch3Pin);
 RcSignalValidator rcSignalValidator;
 
+unsigned long lastMotorUpdateInMilliSec = 0;
+unsigned long lastDisplayUpdateInMilliSec = 0;
+unsigned long lastSerialUpdateInMilliSec = 0;
 
 
 void setup() {
@@ -28,6 +35,7 @@ void setup() {
   Wire.begin();
   rcInput.begin();
   esc.begin();
+  steering.begin();
   DisplayBeginResult displayStatus = display.begin();
 
   if (!displayStatus.ok) {
@@ -39,6 +47,7 @@ void setup() {
 }
 
 void loop() {
+  unsigned long nowInMilliSec = millis();
   RcChannelSnapshot rcSnapshot = rcInput.read();
   RcChannelState rcState = rcSignalValidator.validate(rcSnapshot);
 
@@ -46,14 +55,31 @@ void loop() {
   ch2 = rcState.ch2;
   ch3 = rcState.ch3;
 
-  EscUpdateResult escResult = esc.update(ch1);
-  if (escResult.isSuccess) {
-    serialMonitor.logValue(escResult.value);
-  } else if (escResult.message != nullptr) {
-    serialMonitor.logLine(escResult.message);
+  DriveUpdateResult driveResult = drive.update(ch1, ch3);
+  unsigned long steeringPulseInMicroSec = steering.update(ch2);
+  EscUpdateResult escResult = {AppConfig::Esc::kNeutralPulseInMicroSec};
+
+  if (nowInMilliSec - lastMotorUpdateInMilliSec >=
+      AppConfig::MainLoop::kMotorUpdateIntervalInMilliSec) {
+    lastMotorUpdateInMilliSec = nowInMilliSec;
+    escResult = esc.update(driveResult.escPulseInMicroSec);
   }
 
-  display.renderChannels(ch1, ch2, ch3, escResult.message);
+  if (nowInMilliSec - lastSerialUpdateInMilliSec >=
+      AppConfig::MainLoop::kSerialUpdateIntervalInMilliSec) {
+    lastSerialUpdateInMilliSec = nowInMilliSec;
 
-  delay(AppConfig::MainLoop::kDelayInMilliSec);
+    if (driveResult.isSignalValid) {
+      //serialMonitor.logValue(escResult.value);
+    } else {
+      //serialMonitor.logLine(driveResult.statusMessage);
+    }
+  }
+
+  if (nowInMilliSec - lastDisplayUpdateInMilliSec >=
+      AppConfig::MainLoop::kDisplayUpdateIntervalInMilliSec) {
+    lastDisplayUpdateInMilliSec = nowInMilliSec;
+    display.renderChannels(ch1, ch2, ch3, escResult.value, steeringPulseInMicroSec,
+                           driveResult.statusMessage);
+  }
 }

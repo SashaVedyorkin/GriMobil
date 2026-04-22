@@ -21,7 +21,7 @@ DisplayBeginResult DisplayController::begin() {
 }
 
 void DisplayController::renderChannels(unsigned long ch1, unsigned long ch2, unsigned long ch3) {
-  renderChannels(ch1, ch2, ch3, "");
+  renderChannels(ch1, ch2, ch3, 0, 0, "");
 }
 
 int DisplayController::toPercent(unsigned long pulse) const {
@@ -35,22 +35,37 @@ int DisplayController::toPercent(unsigned long pulse) const {
              AppConfig::Display::kPercentMaxPulseInMicroSec, 0, 100);
 }
 
+bool DisplayController::isSignalVisible(unsigned long pulse) const {
+  return pulse > AppConfig::Display::kVisibleSignalMinInMicroSec &&
+         pulse < AppConfig::Display::kVisibleSignalMaxInMicroSec;
+}
+
+const char* DisplayController::getDriveDisplayLabel(const char* status) const {
+  if (status == nullptr || status[0] == '\0') {
+    return AppConfig::Text::kDisplayDriveNeutral;
+  }
+
+  if (strcmp(status, AppConfig::Text::kDriveForward) == 0) {
+    return AppConfig::Text::kDisplayDriveForward;
+  }
+
+  if (strcmp(status, AppConfig::Text::kDriveReverse) == 0) {
+    return AppConfig::Text::kDisplayDriveReverse;
+  }
+
+  if (strcmp(status, AppConfig::Text::kDriveNoSignal) == 0) {
+    return AppConfig::Text::kDriveNoSignal;
+  }
+
+  return AppConfig::Text::kDisplayDriveNeutral;
+}
+
 void DisplayController::renderChannels(unsigned long ch1, unsigned long ch2, unsigned long ch3,
-                                       const String& custom) {
-  int percent1 = 0;
-  int percent2 = 0;
+                                       unsigned long escPulseInMicroSec,
+                                       unsigned long steeringPulseInMicroSec, const char* custom) {
   int percent3 = 0;
 
-  if (ch1 > AppConfig::Display::kVisibleSignalMinInMicroSec &&
-      ch1 < AppConfig::Display::kVisibleSignalMaxInMicroSec) {
-    percent1 = toPercent(ch1);
-  }
-  if (ch2 > AppConfig::Display::kVisibleSignalMinInMicroSec &&
-      ch2 < AppConfig::Display::kVisibleSignalMaxInMicroSec) {
-    percent2 = toPercent(ch2);
-  }
-  if (ch3 > AppConfig::Display::kVisibleSignalMinInMicroSec &&
-      ch3 < AppConfig::Display::kVisibleSignalMaxInMicroSec) {
+  if (isSignalVisible(ch3)) {
     percent3 = toPercent(ch3);
   }
 
@@ -60,32 +75,36 @@ void DisplayController::renderChannels(unsigned long ch1, unsigned long ch2, uns
 
   display_.setCursor(0, 16);
   display_.print(AppConfig::Text::kChannel1Label);
-  display_.print(ch1);
-  display_.print(" ");
-  display_.print(percent1);
-  display_.print("%");
-  if (custom.length() > 0) {
+  if (isSignalVisible(ch1)) {
+    display_.print(ch1);
     display_.print(" ");
-    display_.println(custom);
+    display_.print(escPulseInMicroSec);
+    display_.print(" ");
+    display_.println(getDriveDisplayLabel(custom));
   } else {
-    display_.println(" ");
+    display_.println(AppConfig::Text::kDriveNoSignal);
   }
 
   display_.setCursor(0, 32);
   display_.print(AppConfig::Text::kChannel2Label);
-  display_.print(ch2);
-  display_.print(" ");
-  display_.print(percent2);
-  display_.print("%");
-  display_.println(" ");
+  if (isSignalVisible(ch2)) {
+    display_.print(ch2);
+    display_.print(" ");
+    display_.println(steeringPulseInMicroSec);
+  } else {
+    display_.println(AppConfig::Text::kDriveNoSignal);
+  }
 
   display_.setCursor(0, 48);
   display_.print(AppConfig::Text::kChannel3Label);
-  display_.print(ch3);
-  display_.print(" ");
-  display_.print(percent3);
-  display_.print("%");
-  display_.println(" ");
+  if (isSignalVisible(ch3)) {
+    display_.print(ch3);
+    display_.print(" ");
+    display_.print(percent3);
+    display_.println("%");
+  } else {
+    display_.println(AppConfig::Text::kDriveNoSignal);
+  }
   
   display_.display();
 }

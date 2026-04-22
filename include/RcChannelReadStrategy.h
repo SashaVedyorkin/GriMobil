@@ -1,6 +1,7 @@
 #pragma once
 
 #include <Arduino.h>
+#include <avr/interrupt.h>
 
 #include "AppConfig.h"
 
@@ -33,15 +34,20 @@ private:
   volatile unsigned long lastPulseInMicroSec_;
 };
 
-class PulseInChannelReadStrategy : public RcChannelReadStrategy {
+class PinChangeInterruptChannelReadStrategy : public RcChannelReadStrategy {
 public:
-  explicit PulseInChannelReadStrategy(uint8_t pin);
+  explicit PinChangeInterruptChannelReadStrategy(uint8_t pin);
 
   void begin() override;
   RcChannelMeasurement read() override;
+  void handleInterrupt();
 
 private:
   uint8_t pin_;
-  unsigned long pulseInMicroSec_;
-  unsigned long lastPulseInMicroSec_;
+  volatile uint8_t* inputRegister_;
+  uint8_t bitMask_;
+  volatile bool lastSignalHigh_;
+  volatile unsigned long riseInMicroSec_;
+  volatile unsigned long pulseInMicroSec_;
+  volatile unsigned long lastPulseInMicroSec_;
 };

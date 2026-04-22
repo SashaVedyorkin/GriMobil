@@ -1,6 +1,6 @@
 #include "EscController.h"
 
-EscController::EscController(uint8_t pin) : pin_(pin), isStopped_(true) {}
+EscController::EscController(uint8_t pin) : pin_(pin) {}
 
 void EscController::begin() {
   esc_.attach(pin_);
@@ -9,33 +9,15 @@ void EscController::begin() {
 }
 
 EscUpdateResult EscController::update(unsigned long pulse) {
-  if (pulse > AppConfig::Esc::kSignalMinInMicroSec &&
-      pulse < AppConfig::Esc::kSignalMaxInMicroSec) {
-    int deltaFromNeutral = abs((int)pulse - AppConfig::Esc::kNeutralPulseInMicroSec);
+  unsigned long constrainedPulse = pulse;
 
-    if (isStopped_) {
-      if (deltaFromNeutral <= AppConfig::Esc::kStopExitDeadbandInMicroSec) {
-        return writeNeutral(AppConfig::Text::kEscStop);
-      }
-    } else if (deltaFromNeutral <= AppConfig::Esc::kStopEnterDeadbandInMicroSec) {
-      return writeNeutral(AppConfig::Text::kEscStop);
-    }
-
-    isStopped_ = false;
-
-    if (pulse > AppConfig::Esc::kNeutralPulseInMicroSec) {
-      esc_.writeMicroseconds((int)pulse);
-      return {nullptr, pulse, true};
-    } else {
-      return writeNeutral(AppConfig::Text::kEscReverse);
-    }
-  } else {
-    return writeNeutral(AppConfig::Text::kEscNoSignal);
+  if (constrainedPulse < AppConfig::Esc::kSignalMinInMicroSec) {
+    constrainedPulse = AppConfig::Esc::kSignalMinInMicroSec;
   }
-}
+  if (constrainedPulse > AppConfig::Esc::kSignalMaxInMicroSec) {
+    constrainedPulse = AppConfig::Esc::kSignalMaxInMicroSec;
+  }
 
-EscUpdateResult EscController::writeNeutral(const char* reason) {
-  isStopped_ = true;
-  esc_.writeMicroseconds(AppConfig::Esc::kNeutralPulseInMicroSec);
-  return {reason, 0, false};
+  esc_.writeMicroseconds((int)constrainedPulse);
+  return {constrainedPulse};
 }

@@ -19,9 +19,12 @@ public:
   DisplayBeginResult begin();
   void renderChannels(unsigned long ch1, unsigned long ch2, unsigned long ch3);
   void renderChannels(unsigned long ch1, unsigned long ch2, unsigned long ch3,
-                      const String& custom);
+                      unsigned long escPulseInMicroSec, unsigned long steeringPulseInMicroSec,
+                      const char* custom);
 
 private:
   Adafruit_SSD1306 display_;
   int toPercent(unsigned long pulse) const;
+  bool isSignalVisible(unsigned long pulse) const;
+  const char* getDriveDisplayLabel(const char* status) const;
 };

@@ -22,5 +22,5 @@ public:
 private:
   InterruptChannelReadStrategy ch1Strategy_;
   InterruptChannelReadStrategy ch2Strategy_;
-  PulseInChannelReadStrategy ch3Strategy_;
+  PinChangeInterruptChannelReadStrategy ch3Strategy_;
 };
