@@ -37,17 +37,45 @@ unsigned long readSteeringPotentiometerPulseInMicroSec() {
              AppConfig::Steering::kInputLeftMaxInMicroSec);
 }
 
-bool useReceiverSteering(unsigned long receiverPulseInMicroSec) {
+long getSteeringOffsetFromCenterInMicroSec(unsigned long pulseInMicroSec) {
+  return static_cast<long>(pulseInMicroSec) -
+         static_cast<long>(AppConfig::Steering::kInputCenterInMicroSec);
+}
+
+unsigned long getSteeringMagnitudeInMicroSec(long offsetInMicroSec) {
+  return offsetInMicroSec >= 0 ? static_cast<unsigned long>(offsetInMicroSec)
+                               : static_cast<unsigned long>(-offsetInMicroSec);
+}
+
+bool useReceiverSteering(unsigned long potentiometerPulseInMicroSec,
+                         unsigned long receiverPulseInMicroSec) {
   if (receiverPulseInMicroSec == 0) {
     return false;
   }
 
-  unsigned long deltaFromCenterInMicroSec =
-      receiverPulseInMicroSec > AppConfig::Steering::kInputCenterInMicroSec
-          ? receiverPulseInMicroSec - AppConfig::Steering::kInputCenterInMicroSec
-          : AppConfig::Steering::kInputCenterInMicroSec - receiverPulseInMicroSec;
+  long receiverOffsetInMicroSec = getSteeringOffsetFromCenterInMicroSec(receiverPulseInMicroSec);
+  unsigned long receiverDeltaFromCenterInMicroSec =
+      getSteeringMagnitudeInMicroSec(receiverOffsetInMicroSec);
 
-  return deltaFromCenterInMicroSec >= AppConfig::Steering::kReceiverOverrideDeltaInMicroSec;
+  if (receiverDeltaFromCenterInMicroSec < AppConfig::Steering::kReceiverOverrideDeltaInMicroSec) {
+    return false;
+  }
+
+  long potentiometerOffsetInMicroSec =
+      getSteeringOffsetFromCenterInMicroSec(potentiometerPulseInMicroSec);
+  unsigned long potentiometerDeltaFromCenterInMicroSec =
+      getSteeringMagnitudeInMicroSec(potentiometerOffsetInMicroSec);
+
+  bool isSameDirection =
+      (receiverOffsetInMicroSec > 0 && potentiometerOffsetInMicroSec > 0) ||
+      (receiverOffsetInMicroSec < 0 && potentiometerOffsetInMicroSec < 0);
+
+  if (isSameDirection &&
+      receiverDeltaFromCenterInMicroSec < potentiometerDeltaFromCenterInMicroSec) {
+    return false;
+  }
+
+  return true;
 }
 }  // namespace
 
@@ -80,7 +108,7 @@ void loop() {
 
   DriveUpdateResult driveResult = drive.update(ch1, ch3);
   unsigned long steeringInputPulseInMicroSec = readSteeringPotentiometerPulseInMicroSec();
-  if (useReceiverSteering(ch2)) {
+  if (useReceiverSteering(steeringInputPulseInMicroSec, ch2)) {
     steeringInputPulseInMicroSec = ch2;
   }
   unsigned long steeringPulseInMicroSec = steering.update(steeringInputPulseInMicroSec);
