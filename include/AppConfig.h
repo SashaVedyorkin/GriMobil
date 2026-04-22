@@ -9,6 +9,7 @@ static const uint8_t kChannel2 = 3;
 static const uint8_t kChannel3 = 4;
 static const uint8_t kEscSignal = 9;
 static const uint8_t kSteeringSignal = 8;
+static const uint8_t kSteeringPotentiometer = A0;
 }  // namespace Pins
 
 namespace Rc {
@@ -45,11 +46,17 @@ static const unsigned long kInputCenterInMicroSec = 1580;
 static const unsigned long kInputLeftMaxInMicroSec = 1900;
 static const unsigned long kInputRightMaxInMicroSec = 1200;
 static const unsigned long kInputDeadZoneInMicroSec = 10;
+static const unsigned long kReceiverOverrideDeltaInMicroSec = 20;
 static const unsigned long kOutputCenterInMicroSec = 1500;
 static const unsigned long kOutputLeftMaxInMicroSec = 2000;
 static const unsigned long kOutputRightMaxInMicroSec = 1000;
 static const unsigned long kStartupDelayInMilliSec = 300;
 }  // namespace Steering
+
+namespace Potentiometer {
+static const int kAnalogMin = 0;
+static const int kAnalogMax = 1023;
+}  // namespace Potentiometer
 
 namespace Display {
 static const int kScreenWidth = 128;
@@ -84,6 +91,7 @@ static const char kDriveNoSignal[] = "NOSIG";
 static const char kDisplayDriveForward[] = "D";
 static const char kDisplayDriveNeutral[] = "N";
 static const char kDisplayDriveReverse[] = "R";
+static const char kShortNoSignal[] = "NS";
 }  // namespace Text
 
 namespace MainLoop {

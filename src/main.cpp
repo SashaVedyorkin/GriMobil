@@ -29,10 +29,33 @@ unsigned long lastMotorUpdateInMilliSec = 0;
 unsigned long lastDisplayUpdateInMilliSec = 0;
 unsigned long lastSerialUpdateInMilliSec = 0;
 
+namespace {
+unsigned long readSteeringPotentiometerPulseInMicroSec() {
+  int potentiometerValue = analogRead(AppConfig::Pins::kSteeringPotentiometer);
+  return map(potentiometerValue, AppConfig::Potentiometer::kAnalogMin,
+             AppConfig::Potentiometer::kAnalogMax, AppConfig::Steering::kInputRightMaxInMicroSec,
+             AppConfig::Steering::kInputLeftMaxInMicroSec);
+}
+
+bool useReceiverSteering(unsigned long receiverPulseInMicroSec) {
+  if (receiverPulseInMicroSec == 0) {
+    return false;
+  }
+
+  unsigned long deltaFromCenterInMicroSec =
+      receiverPulseInMicroSec > AppConfig::Steering::kInputCenterInMicroSec
+          ? receiverPulseInMicroSec - AppConfig::Steering::kInputCenterInMicroSec
+          : AppConfig::Steering::kInputCenterInMicroSec - receiverPulseInMicroSec;
+
+  return deltaFromCenterInMicroSec >= AppConfig::Steering::kReceiverOverrideDeltaInMicroSec;
+}
+}  // namespace
+
 
 void setup() {
   serialMonitor.begin();
   Wire.begin();
+  pinMode(AppConfig::Pins::kSteeringPotentiometer, INPUT);
   rcInput.begin();
   esc.begin();
   steering.begin();
@@ -56,7 +79,11 @@ void loop() {
   ch3 = rcState.ch3;
 
   DriveUpdateResult driveResult = drive.update(ch1, ch3);
-  unsigned long steeringPulseInMicroSec = steering.update(ch2);
+  unsigned long steeringInputPulseInMicroSec = readSteeringPotentiometerPulseInMicroSec();
+  if (useReceiverSteering(ch2)) {
+    steeringInputPulseInMicroSec = ch2;
+  }
+  unsigned long steeringPulseInMicroSec = steering.update(steeringInputPulseInMicroSec);
   EscUpdateResult escResult = {AppConfig::Esc::kNeutralPulseInMicroSec};
 
   if (nowInMilliSec - lastMotorUpdateInMilliSec >=

@@ -92,7 +92,9 @@ void DisplayController::renderChannels(unsigned long ch1, unsigned long ch2, uns
     display_.print(" ");
     display_.println(steeringPulseInMicroSec);
   } else {
-    display_.println(AppConfig::Text::kDriveNoSignal);
+    display_.print(AppConfig::Text::kShortNoSignal);
+    display_.print(" ");
+    display_.println(steeringPulseInMicroSec);
   }
 
   display_.setCursor(0, 48);
