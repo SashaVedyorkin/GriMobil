@@ -2,18 +2,21 @@
 
 #include <Arduino.h>
 
+#include "AppConfig.h"
 #include "RcInputController.h"
 
 struct RcChannelState {
   unsigned long ch1;
   unsigned long ch2;
+  unsigned long ch3;
 };
 
 class RcSignalValidator {
 public:
-  RcSignalValidator(unsigned long signalTimeoutInMicroSec = 100000,
-                    unsigned long signalMinInMicroSec = 900,
-                    unsigned long signalMaxInMicroSec = 2200);
+  RcSignalValidator(
+      unsigned long signalTimeoutInMicroSec = AppConfig::Rc::kSignalTimeoutInMicroSec,
+      unsigned long signalMinInMicroSec = AppConfig::Rc::kSignalMinInMicroSec,
+      unsigned long signalMaxInMicroSec = AppConfig::Rc::kSignalMaxInMicroSec);
 
   RcChannelState validate(const RcChannelSnapshot& snapshot) const;
 

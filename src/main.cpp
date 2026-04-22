@@ -1,22 +1,23 @@
 #include <Arduino.h>
 #include <Wire.h>
+#include "AppConfig.h"
 #include "DisplayController.h"
 #include "EscController.h"
 #include "RcInputController.h"
 #include "RcSignalValidator.h"
 #include "SerialController.h"
 
-const byte ch1Pin = 2;
-const byte ch2Pin = 3;
-const byte ch3Pin = 4;
+const byte ch1Pin = AppConfig::Pins::kChannel1;
+const byte ch2Pin = AppConfig::Pins::kChannel2;
+const byte ch3Pin = AppConfig::Pins::kChannel3;
 
-unsigned long ch1 = 1500;
-unsigned long ch2 = 1500;
-unsigned long ch3 = 1500;
+unsigned long ch1 = AppConfig::Rc::kDefaultPulseInMicroSec;
+unsigned long ch2 = AppConfig::Rc::kDefaultPulseInMicroSec;
+unsigned long ch3 = AppConfig::Rc::kDefaultPulseInMicroSec;
 
 SerialController serialMonitor;
 DisplayController display;
-EscController esc(9);
+EscController esc(AppConfig::Pins::kEscSignal);
 RcInputController rcInput(ch1Pin, ch2Pin, ch3Pin);
 RcSignalValidator rcSignalValidator;
 
@@ -34,7 +35,7 @@ void setup() {
     while (true) {}
   }
 
-  serialMonitor.logLine(F("RC Monitor started"));
+  serialMonitor.logLine(AppConfig::Text::kRcMonitorStarted);
 }
 
 void loop() {
@@ -54,5 +55,5 @@ void loop() {
 
   display.renderChannels(ch1, ch2, ch3, escResult.message);
 
-  delay(20);
+  delay(AppConfig::MainLoop::kDelayInMilliSec);
 }

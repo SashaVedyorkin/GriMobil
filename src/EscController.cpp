@@ -4,37 +4,38 @@ EscController::EscController(uint8_t pin) : pin_(pin), isStopped_(true) {}
 
 void EscController::begin() {
   esc_.attach(pin_);
-  esc_.writeMicroseconds(kNeutralPulse);
-  delay(3000);
+  esc_.writeMicroseconds(AppConfig::Esc::kNeutralPulseInMicroSec);
+  delay(AppConfig::Esc::kStartupDelayInMilliSec);
 }
 
 EscUpdateResult EscController::update(unsigned long pulse) {
-  if (pulse > kSignalMin && pulse < kSignalMax) {
-    int deltaFromNeutral = abs((int)pulse - kNeutralPulse);
+  if (pulse > AppConfig::Esc::kSignalMinInMicroSec &&
+      pulse < AppConfig::Esc::kSignalMaxInMicroSec) {
+    int deltaFromNeutral = abs((int)pulse - AppConfig::Esc::kNeutralPulseInMicroSec);
 
     if (isStopped_) {
-      if (deltaFromNeutral <= kStopExitDeadband) {
-        return writeNeutral(F("1500 STOP"));
+      if (deltaFromNeutral <= AppConfig::Esc::kStopExitDeadbandInMicroSec) {
+        return writeNeutral(AppConfig::Text::kEscStop);
       }
-    } else if (deltaFromNeutral <= kStopEnterDeadband) {
-      return writeNeutral(F("1500 STOP"));
+    } else if (deltaFromNeutral <= AppConfig::Esc::kStopEnterDeadbandInMicroSec) {
+      return writeNeutral(AppConfig::Text::kEscStop);
     }
 
     isStopped_ = false;
 
-    if (pulse > kNeutralPulse) {
+    if (pulse > AppConfig::Esc::kNeutralPulseInMicroSec) {
       esc_.writeMicroseconds((int)pulse);
       return {nullptr, pulse, true};
     } else {
-      return writeNeutral(F("1500 REV_WAIT"));
+      return writeNeutral(AppConfig::Text::kEscReverse);
     }
   } else {
-    return writeNeutral(F("1500 NO_SIG"));
+    return writeNeutral(AppConfig::Text::kEscNoSignal);
   }
 }
 
-EscUpdateResult EscController::writeNeutral(const __FlashStringHelper* reason) {
+EscUpdateResult EscController::writeNeutral(const char* reason) {
   isStopped_ = true;
-  esc_.writeMicroseconds(kNeutralPulse);
+  esc_.writeMicroseconds(AppConfig::Esc::kNeutralPulseInMicroSec);
   return {reason, 0, false};
 }

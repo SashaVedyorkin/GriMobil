@@ -6,6 +6,10 @@ void SerialController::begin() {
   Serial.begin(baudRate_);
 }
 
+void SerialController::logLine(const char* message) {
+  Serial.println(message);
+}
+
 void SerialController::logLine(const __FlashStringHelper* message) {
   Serial.println(message);
 }

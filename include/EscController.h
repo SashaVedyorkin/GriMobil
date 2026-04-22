@@ -3,8 +3,10 @@
 #include <Arduino.h>
 #include <Servo.h>
 
+#include "AppConfig.h"
+
 struct EscUpdateResult {
-  const __FlashStringHelper* message;
+  const char* message;
   unsigned long value;
   bool isSuccess;
 };
@@ -17,15 +19,9 @@ public:
   EscUpdateResult update(unsigned long pulse);
 
 private:
-  static const int kNeutralPulse = 1500;
-  static const int kSignalMin = 1000;
-  static const int kSignalMax = 2000;
-  static const int kStopEnterDeadband = 10;
-  static const int kStopExitDeadband = 35;
-
   uint8_t pin_;
   Servo esc_;
   bool isStopped_;
 
-  EscUpdateResult writeNeutral(const __FlashStringHelper* reason);
+  EscUpdateResult writeNeutral(const char* reason);
 };
