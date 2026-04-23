@@ -141,20 +141,25 @@ unsigned long DriveController::smoothEscPulse(unsigned long targetEscPulseInMicr
     return lastEscPulseInMicroSec_;
   }
 
+  unsigned long rampStepInMicroSec =
+      targetEscPulseInMicroSec == AppConfig::Esc::kNeutralPulseInMicroSec
+          ? AppConfig::Drive::kEscFastStopRampStepInMicroSec
+          : AppConfig::Drive::kEscRampStepInMicroSec;
+
   unsigned long deltaInMicroSec =
       targetEscPulseInMicroSec > lastEscPulseInMicroSec_
           ? targetEscPulseInMicroSec - lastEscPulseInMicroSec_
           : lastEscPulseInMicroSec_ - targetEscPulseInMicroSec;
 
-  if (deltaInMicroSec <= AppConfig::Drive::kEscRampStepInMicroSec) {
+  if (deltaInMicroSec <= rampStepInMicroSec) {
     return targetEscPulseInMicroSec;
   }
 
   if (targetEscPulseInMicroSec > lastEscPulseInMicroSec_) {
-    return lastEscPulseInMicroSec_ + AppConfig::Drive::kEscRampStepInMicroSec;
+    return lastEscPulseInMicroSec_ + rampStepInMicroSec;
   }
 
-  return lastEscPulseInMicroSec_ - AppConfig::Drive::kEscRampStepInMicroSec;
+  return lastEscPulseInMicroSec_ - rampStepInMicroSec;
 }
 
 const char* DriveController::getStatusMessage(bool isSignalValid) const {
