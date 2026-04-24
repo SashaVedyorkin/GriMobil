@@ -8,7 +8,8 @@ RcSignalValidator::RcSignalValidator(unsigned long signalTimeoutInMicroSec,
       signalMaxInMicroSec_(signalMaxInMicroSec),
       lastValidCh1InMicroSec_(0),
       lastValidCh2InMicroSec_(0),
-      lastValidCh3InMicroSec_(0) {}
+      lastValidCh3InMicroSec_(0),
+      lastValidCh4InMicroSec_(0) {}
 
 RcChannelState RcSignalValidator::validate(const RcChannelSnapshot& snapshot) {
   RcChannelState state;
@@ -18,6 +19,8 @@ RcChannelState RcSignalValidator::validate(const RcChannelSnapshot& snapshot) {
                               lastValidCh2InMicroSec_);
   state.ch3 = validateChannel(snapshot.ch3PulseInMicroSec, snapshot.ch3PulseAgeInMicroSec,
                               lastValidCh3InMicroSec_);
+  state.ch4 = validateChannel(snapshot.ch4PulseInMicroSec, snapshot.ch4PulseAgeInMicroSec,
+                              lastValidCh4InMicroSec_);
   return state;
 }
 

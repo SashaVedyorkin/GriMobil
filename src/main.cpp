@@ -17,7 +17,7 @@ const byte ch4Pin = AppConfig::Pins::kChannel4;
 unsigned long ch1 = AppConfig::Rc::kDefaultPulseInMicroSec;
 unsigned long ch2 = AppConfig::Rc::kDefaultPulseInMicroSec;
 unsigned long ch3 = AppConfig::Rc::kDefaultPulseInMicroSec;
-unsigned long ch4 = 0;
+unsigned long ch4 = AppConfig::Rc::kDefaultPulseInMicroSec;
 bool isCarSteeringEnabled = true;
 bool wasReceiverSteeringLockActive = false;
 
@@ -26,11 +26,10 @@ DisplayController display;
 DriveController drive;
 EscController esc(AppConfig::Pins::kEscSignal);
 SteeringController steering(AppConfig::Pins::kSteeringSignal);
-RcInputController rcInput(ch1Pin, ch2Pin, ch3Pin);
+RcInputController rcInput(ch1Pin, ch2Pin, ch3Pin, ch4Pin);
 RcSignalValidator rcSignalValidator;
 
 unsigned long lastMotorUpdateInMilliSec = 0;
-unsigned long lastChannel4ReadInMilliSec = 0;
 unsigned long lastDisplayUpdateInMilliSec = 0;
 unsigned long lastSerialUpdateInMilliSec = 0;
 
@@ -99,16 +98,6 @@ void updateSteeringControlMode(unsigned long channel4PulseInMicroSec) {
   wasReceiverSteeringLockActive = isReceiverSteeringLockActiveNow;
 }
 
-unsigned long readChannel4PulseInMicroSec() {
-  unsigned long pulseInMicroSec = pulseIn(ch4Pin, HIGH, AppConfig::Rc::kPulseTimeoutInMicroSec);
-
-  if (pulseInMicroSec >= AppConfig::Rc::kSignalMinInMicroSec &&
-      pulseInMicroSec <= AppConfig::Rc::kSignalMaxInMicroSec) {
-    return pulseInMicroSec;
-  }
-
-  return 0;
-}
 }
 
 
@@ -116,7 +105,6 @@ void setup() {
   serialMonitor.begin();
   Wire.begin();
   pinMode(AppConfig::Pins::kSteeringPotentiometer, INPUT);
-  pinMode(ch4Pin, INPUT);
   rcInput.begin();
   esc.begin();
   steering.begin();
@@ -138,8 +126,10 @@ void loop() {
   ch1 = rcState.ch1;
   ch2 = rcState.ch2;
   ch3 = rcState.ch3;
+  ch4 = rcState.ch4;
 
   DriveUpdateResult driveResult = drive.update(ch1, ch3);
+  updateSteeringControlMode(ch4);
   unsigned long steeringInputPulseInMicroSec = AppConfig::Steering::kInputCenterInMicroSec;
 
   if (!isCarSteeringEnabled) {
@@ -161,13 +151,6 @@ void loop() {
     escResult = esc.update(driveResult.escPulseInMicroSec);
   }
 
-  if (nowInMilliSec - lastChannel4ReadInMilliSec >=
-      AppConfig::MainLoop::kChannel4ReadIntervalInMilliSec) {
-    lastChannel4ReadInMilliSec = nowInMilliSec;
-    ch4 = readChannel4PulseInMicroSec();
-    updateSteeringControlMode(ch4);
-  }
-
   if (nowInMilliSec - lastSerialUpdateInMilliSec >=
       AppConfig::MainLoop::kSerialUpdateIntervalInMilliSec) {
     lastSerialUpdateInMilliSec = nowInMilliSec;
@@ -182,7 +165,7 @@ void loop() {
   if (nowInMilliSec - lastDisplayUpdateInMilliSec >=
       AppConfig::MainLoop::kDisplayUpdateIntervalInMilliSec) {
     lastDisplayUpdateInMilliSec = nowInMilliSec;
-    display.renderChannels(ch1, ch2, ch4, escResult.value, steeringPulseInMicroSec,
+    display.renderChannels(ch1, ch2, ch3, ch4, escResult.value, steeringPulseInMicroSec,
                            driveResult.statusMessage);
   }
 }

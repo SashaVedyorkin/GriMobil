@@ -9,6 +9,7 @@ struct RcChannelState {
   unsigned long ch1;
   unsigned long ch2;
   unsigned long ch3;
+  unsigned long ch4;
 };
 
 class RcSignalValidator {
@@ -27,6 +28,7 @@ private:
   unsigned long lastValidCh1InMicroSec_;
   unsigned long lastValidCh2InMicroSec_;
   unsigned long lastValidCh3InMicroSec_;
+  unsigned long lastValidCh4InMicroSec_;
 
   unsigned long validateChannel(unsigned long pulseInMicroSec,
                                 unsigned long pulseAgeInMicroSec,

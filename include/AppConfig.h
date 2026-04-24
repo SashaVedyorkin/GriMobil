@@ -6,8 +6,8 @@ namespace AppConfig {
 namespace Pins {
 static const uint8_t kChannel1 = 2;
 static const uint8_t kChannel2 = 3;
-static const uint8_t kChannel3 = 4;
-static const uint8_t kChannel4 = 5;
+static const uint8_t kChannel3 = 18;
+static const uint8_t kChannel4 = 19;
 static const uint8_t kEscSignal = 9;
 static const uint8_t kSteeringSignal = 8;
 static const uint8_t kSteeringPotentiometer = A0;
@@ -47,7 +47,7 @@ namespace Steering {
 static const unsigned long kInputCenterInMicroSec = 1580;
 static const unsigned long kInputLeftMaxInMicroSec = 1900;
 static const unsigned long kInputRightMaxInMicroSec = 1200;
-static const unsigned long kInputDeadZoneInMicroSec = 10;
+static const unsigned long kInputDeadZoneInMicroSec = 50;
 static const unsigned long kReceiverOverrideDeltaInMicroSec = 20;
 static const unsigned long kReceiverLockThresholdInMicroSec = 1200;
 static const unsigned long kOutputCenterInMicroSec = 1500;
@@ -82,7 +82,8 @@ static const char kStartupMonitorTitle[] = "RC Monitor";
 static const char kMainScreenTitle[] = "GriMobil 1.0";
 static const char kChannel1Label[] = "CH1: ";
 static const char kChannel2Label[] = "CH2: ";
-static const char kChannel3Label[] = "CH4: ";
+static const char kChannel3Label[] = "CH3: ";
+static const char kChannel4Label[] = "CH4: ";
 static const char kRcMonitorStarted[] = "RC Monitor started";
 static const char kOledNotFound[] = "OLED not found";
 static const char kEscStop[] = "STOP";
@@ -99,7 +100,6 @@ static const char kShortNoSignal[] = "NS";
 
 namespace MainLoop {
 static const unsigned long kMotorUpdateIntervalInMilliSec = 5;
-static const unsigned long kChannel4ReadIntervalInMilliSec = 50;
 static const unsigned long kDisplayUpdateIntervalInMilliSec = 50;
 static const unsigned long kSerialUpdateIntervalInMilliSec = 100;
 }  // namespace MainLoop

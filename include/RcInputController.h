@@ -7,14 +7,16 @@ struct RcChannelSnapshot {
   unsigned long ch1PulseInMicroSec;
   unsigned long ch2PulseInMicroSec;
   unsigned long ch3PulseInMicroSec;
+  unsigned long ch4PulseInMicroSec;
   unsigned long ch1PulseAgeInMicroSec;
   unsigned long ch2PulseAgeInMicroSec;
   unsigned long ch3PulseAgeInMicroSec;
+  unsigned long ch4PulseAgeInMicroSec;
 };
 
 class RcInputController {
 public:
-  RcInputController(uint8_t ch1Pin, uint8_t ch2Pin, uint8_t ch3Pin);
+  RcInputController(uint8_t ch1Pin, uint8_t ch2Pin, uint8_t ch3Pin, uint8_t ch4Pin);
 
   void begin();
   RcChannelSnapshot read();
@@ -22,5 +24,6 @@ public:
 private:
   InterruptChannelReadStrategy ch1Strategy_;
   InterruptChannelReadStrategy ch2Strategy_;
-  PinChangeInterruptChannelReadStrategy ch3Strategy_;
+  InterruptChannelReadStrategy ch3Strategy_;
+  InterruptChannelReadStrategy ch4Strategy_;
 };

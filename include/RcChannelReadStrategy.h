@@ -33,21 +33,3 @@ private:
   volatile unsigned long pulseInMicroSec_;
   volatile unsigned long lastPulseInMicroSec_;
 };
-
-class PinChangeInterruptChannelReadStrategy : public RcChannelReadStrategy {
-public:
-  explicit PinChangeInterruptChannelReadStrategy(uint8_t pin);
-
-  void begin() override;
-  RcChannelMeasurement read() override;
-  void handleInterrupt();
-
-private:
-  uint8_t pin_;
-  volatile uint8_t* inputRegister_;
-  uint8_t bitMask_;
-  volatile bool lastSignalHigh_;
-  volatile unsigned long riseInMicroSec_;
-  volatile unsigned long pulseInMicroSec_;
-  volatile unsigned long lastPulseInMicroSec_;
-};
