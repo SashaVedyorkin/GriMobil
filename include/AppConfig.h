@@ -48,12 +48,15 @@ namespace Steering {
 static const unsigned long kInputCenterInMicroSec = 1580;
 static const unsigned long kInputLeftMaxInMicroSec = 1900;
 static const unsigned long kInputRightMaxInMicroSec = 1200;
-static const unsigned long kInputDeadZoneInMicroSec = 50;
-static const unsigned long kReceiverOverrideDeltaInMicroSec = 20;
+static const unsigned long kInputDeadZoneInMicroSec = 0;
+static const unsigned long kReceiverOverrideDeltaInMicroSec = 50;
 static const unsigned long kReceiverLockThresholdInMicroSec = 1200;
 static const unsigned long kOutputCenterInMicroSec = 1500;
 static const unsigned long kOutputLeftMaxInMicroSec = 2000;
 static const unsigned long kOutputRightMaxInMicroSec = 1000;
+static const unsigned long kOutputRampMinStepInMicroSec = 18;
+static const unsigned long kOutputRampMaxStepInMicroSec = 70;
+static const unsigned long kOutputRampIntervalInMilliSec = 2;
 static const unsigned long kStartupDelayInMilliSec = 300;
 }  // namespace Steering
 
