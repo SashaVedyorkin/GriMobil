@@ -54,8 +54,8 @@ static const unsigned long kReceiverLockThresholdInMicroSec = 1200;
 static const unsigned long kOutputCenterInMicroSec = 1500;
 static const unsigned long kOutputLeftMaxInMicroSec = 2000;
 static const unsigned long kOutputRightMaxInMicroSec = 1000;
-static const unsigned long kOutputRampMinStepInMicroSec = 18;
 static const unsigned long kOutputRampMaxStepInMicroSec = 70;
+static const unsigned long kOutputRampEaseDivisor = 3;
 static const unsigned long kOutputRampIntervalInMilliSec = 2;
 static const unsigned long kStartupDelayInMilliSec = 300;
 }  // namespace Steering
