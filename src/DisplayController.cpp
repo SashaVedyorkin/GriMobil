@@ -21,8 +21,9 @@ DisplayBeginResult DisplayController::begin() {
 }
 
 void DisplayController::renderChannels(unsigned long ch1, unsigned long ch2, unsigned long ch3,
-                                       unsigned long ch4) {
-  renderChannels(ch1, ch2, ch3, ch4, 0, 0, "");
+                                       bool isCarSteeringEnabled,
+                                       bool isRemoteRequiredForDrive) {
+  renderChannels(ch1, ch2, ch3, isCarSteeringEnabled, isRemoteRequiredForDrive, 0, 0, "");
 }
 
 int DisplayController::toPercent(unsigned long pulse) const {
@@ -62,15 +63,10 @@ const char* DisplayController::getDriveDisplayLabel(const char* status) const {
 }
 
 void DisplayController::renderChannels(unsigned long ch1, unsigned long ch2, unsigned long ch3,
-                                       unsigned long ch4,
+                                       bool isCarSteeringEnabled,
+                                       bool isRemoteRequiredForDrive,
                                        unsigned long escPulseInMicroSec,
                                        unsigned long steeringPulseInMicroSec, const char* custom) {
-  int percent4 = 0;
-
-  if (isSignalVisible(ch4)) {
-    percent4 = toPercent(ch4);
-  }
-
   display_.clearDisplay();
   display_.setCursor(0, 0);
   display_.print(AppConfig::Text::kMainScreenTitle);
@@ -92,23 +88,23 @@ void DisplayController::renderChannels(unsigned long ch1, unsigned long ch2, uns
   if (isSignalVisible(ch2)) {
     display_.print(ch2);
     display_.print(" ");
-    display_.println(steeringPulseInMicroSec);
+    display_.print(steeringPulseInMicroSec);
+    display_.print(" ");
+    display_.println(isCarSteeringEnabled ? AppConfig::Text::kDisplayCarSteering
+                                          : AppConfig::Text::kDisplayReceiverSteering);
   } else {
     display_.print(AppConfig::Text::kShortNoSignal);
     display_.print(" ");
-    display_.println(steeringPulseInMicroSec);
+    display_.print(steeringPulseInMicroSec);
+    display_.print(" ");
+    display_.println(isCarSteeringEnabled ? AppConfig::Text::kDisplayCarSteering
+                                          : AppConfig::Text::kDisplayReceiverSteering);
   }
 
   display_.setCursor(0, 48);
-  display_.print(AppConfig::Text::kChannel4Label);
-  if (isSignalVisible(ch4)) {
-    display_.print(ch4);
-    display_.print(" ");
-    display_.print(percent4);
-    display_.println("%");
-  } else {
-    display_.println(AppConfig::Text::kDriveNoSignal);
-  }
+  display_.print(AppConfig::Text::kDisplayModeLabel);
+  display_.println(isRemoteRequiredForDrive ? AppConfig::Text::kDisplayModeRemoteCheck
+                                            : AppConfig::Text::kDisplayModeNoCheck);
   
   display_.display();
 }

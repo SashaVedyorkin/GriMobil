@@ -17,9 +17,10 @@ public:
   DisplayController();
 
   DisplayBeginResult begin();
-  void renderChannels(unsigned long ch1, unsigned long ch2, unsigned long ch3, unsigned long ch4);
   void renderChannels(unsigned long ch1, unsigned long ch2, unsigned long ch3,
-                      unsigned long ch4,
+                      bool isCarSteeringEnabled, bool isRemoteRequiredForDrive);
+  void renderChannels(unsigned long ch1, unsigned long ch2, unsigned long ch3,
+                      bool isCarSteeringEnabled, bool isRemoteRequiredForDrive,
                       unsigned long escPulseInMicroSec, unsigned long steeringPulseInMicroSec,
                       const char* custom);
 

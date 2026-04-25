@@ -8,6 +8,7 @@ static const uint8_t kChannel1 = 2;
 static const uint8_t kChannel2 = 3;
 static const uint8_t kChannel3 = 18;
 static const uint8_t kChannel4 = 19;
+static const uint8_t kDriveSafetyToggle = 22;
 static const uint8_t kEscSignal = 9;
 static const uint8_t kSteeringSignal = 8;
 static const uint8_t kSteeringPotentiometer = A0;
@@ -95,6 +96,11 @@ static const char kDriveNoSignal[] = "NOSIG";
 static const char kDisplayDriveForward[] = "D";
 static const char kDisplayDriveNeutral[] = "N";
 static const char kDisplayDriveReverse[] = "R";
+static const char kDisplayCarSteering[] = "<-->";
+static const char kDisplayReceiverSteering[] = "<X>";
+static const char kDisplayModeLabel[] = "Mode: ";
+static const char kDisplayModeNoCheck[] = "NC";
+static const char kDisplayModeRemoteCheck[] = "RCC";
 static const char kShortNoSignal[] = "NS";
 }  // namespace Text
 

@@ -13,6 +13,7 @@ const byte ch1Pin = AppConfig::Pins::kChannel1;
 const byte ch2Pin = AppConfig::Pins::kChannel2;
 const byte ch3Pin = AppConfig::Pins::kChannel3;
 const byte ch4Pin = AppConfig::Pins::kChannel4;
+const byte driveSafetyTogglePin = AppConfig::Pins::kDriveSafetyToggle;
 
 unsigned long ch1 = AppConfig::Rc::kDefaultPulseInMicroSec;
 unsigned long ch2 = AppConfig::Rc::kDefaultPulseInMicroSec;
@@ -20,6 +21,7 @@ unsigned long ch3 = AppConfig::Rc::kDefaultPulseInMicroSec;
 unsigned long ch4 = AppConfig::Rc::kDefaultPulseInMicroSec;
 bool isCarSteeringEnabled = true;
 bool wasReceiverSteeringLockActive = false;
+bool isRemoteRequiredForDrive = false;
 
 SerialController serialMonitor;
 DisplayController display;
@@ -98,6 +100,15 @@ void updateSteeringControlMode(unsigned long channel4PulseInMicroSec) {
   wasReceiverSteeringLockActive = isReceiverSteeringLockActiveNow;
 }
 
+bool readDriveSafetyToggle() {
+  return digitalRead(driveSafetyTogglePin) == HIGH;
+}
+
+bool isRemoteDriveSignalAvailable(unsigned long throttlePulseInMicroSec,
+                                  unsigned long directionPulseInMicroSec) {
+  return throttlePulseInMicroSec != 0 && directionPulseInMicroSec != 0;
+}
+
 }
 
 
@@ -105,6 +116,7 @@ void setup() {
   serialMonitor.begin();
   Wire.begin();
   pinMode(AppConfig::Pins::kSteeringPotentiometer, INPUT);
+  pinMode(driveSafetyTogglePin, INPUT);
   rcInput.begin();
   esc.begin();
   steering.begin();
@@ -127,8 +139,16 @@ void loop() {
   ch2 = rcState.ch2;
   ch3 = rcState.ch3;
   ch4 = rcState.ch4;
+  isRemoteRequiredForDrive = readDriveSafetyToggle();
 
+  bool isRemoteDriveSignalAvailableNow = isRemoteDriveSignalAvailable(ch1, ch3);
   DriveUpdateResult driveResult = drive.update(ch1, ch3);
+
+  if (isRemoteRequiredForDrive && !isRemoteDriveSignalAvailableNow) {
+    driveResult = {AppConfig::Text::kDriveNoSignal, AppConfig::Esc::kNeutralPulseInMicroSec,
+                   false};
+  }
+
   updateSteeringControlMode(ch4);
   unsigned long steeringInputPulseInMicroSec = AppConfig::Steering::kInputCenterInMicroSec;
 
@@ -165,7 +185,9 @@ void loop() {
   if (nowInMilliSec - lastDisplayUpdateInMilliSec >=
       AppConfig::MainLoop::kDisplayUpdateIntervalInMilliSec) {
     lastDisplayUpdateInMilliSec = nowInMilliSec;
-    display.renderChannels(ch1, ch2, ch3, ch4, escResult.value, steeringPulseInMicroSec,
+    display.renderChannels(ch1, ch2, ch3, isCarSteeringEnabled, isRemoteRequiredForDrive,
+                           escResult.value,
+                           steeringPulseInMicroSec,
                            driveResult.statusMessage);
   }
 }
