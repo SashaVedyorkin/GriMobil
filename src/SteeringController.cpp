@@ -145,16 +145,22 @@ unsigned long SteeringController::smoothServoPulse(unsigned long targetPulseInMi
 }
 
 unsigned long SteeringController::calculateRampStep(unsigned long deltaInMicroSec) const {
-  unsigned long minStepInMicroSec = AppConfig::Steering::kOutputRampMinStepInMicroSec;
   unsigned long maxStepInMicroSec = AppConfig::Steering::kOutputRampMaxStepInMicroSec;
+  unsigned long easeDivisor = AppConfig::Steering::kOutputRampEaseDivisor;
 
-  if (deltaInMicroSec <= minStepInMicroSec) {
-    return minStepInMicroSec;
+  if (deltaInMicroSec == 0) {
+    return 0;
   }
 
-  if (deltaInMicroSec >= 200) {
+  unsigned long rampStepInMicroSec = deltaInMicroSec / easeDivisor;
+
+  if (rampStepInMicroSec == 0) {
+    rampStepInMicroSec = 1;
+  }
+
+  if (rampStepInMicroSec > maxStepInMicroSec) {
     return maxStepInMicroSec;
   }
 
-  return map(deltaInMicroSec, minStepInMicroSec, 200, minStepInMicroSec, maxStepInMicroSec);
+  return rampStepInMicroSec;
 }
