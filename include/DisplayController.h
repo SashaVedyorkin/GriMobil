@@ -18,9 +18,11 @@ public:
 
   DisplayBeginResult begin();
   void renderChannels(unsigned long ch1, unsigned long ch2, unsigned long ch3,
-                      bool isCarSteeringEnabled, bool isRemoteRequiredForDrive);
+                      bool isCarSteeringEnabled, bool isRemoteRequiredForDrive,
+                      float speedInKiloMetersPerHour, const char* stateText);
   void renderChannels(unsigned long ch1, unsigned long ch2, unsigned long ch3,
                       bool isCarSteeringEnabled, bool isRemoteRequiredForDrive,
+                      float speedInKiloMetersPerHour, const char* stateText,
                       unsigned long escPulseInMicroSec, unsigned long steeringPulseInMicroSec,
                       const char* custom);
 

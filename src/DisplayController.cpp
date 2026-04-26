@@ -22,8 +22,11 @@ DisplayBeginResult DisplayController::begin() {
 
 void DisplayController::renderChannels(unsigned long ch1, unsigned long ch2, unsigned long ch3,
                                        bool isCarSteeringEnabled,
-                                       bool isRemoteRequiredForDrive) {
-  renderChannels(ch1, ch2, ch3, isCarSteeringEnabled, isRemoteRequiredForDrive, 0, 0, "");
+                                       bool isRemoteRequiredForDrive,
+                                       float speedInKiloMetersPerHour,
+                                       const char* stateText) {
+  renderChannels(ch1, ch2, ch3, isCarSteeringEnabled, isRemoteRequiredForDrive,
+                 speedInKiloMetersPerHour, stateText, 0, 0, "");
 }
 
 int DisplayController::toPercent(unsigned long pulse) const {
@@ -65,11 +68,15 @@ const char* DisplayController::getDriveDisplayLabel(const char* status) const {
 void DisplayController::renderChannels(unsigned long ch1, unsigned long ch2, unsigned long ch3,
                                        bool isCarSteeringEnabled,
                                        bool isRemoteRequiredForDrive,
+                                       float speedInKiloMetersPerHour,
+                                       const char* stateText,
                                        unsigned long escPulseInMicroSec,
                                        unsigned long steeringPulseInMicroSec, const char* custom) {
   display_.clearDisplay();
   display_.setCursor(0, 0);
-  display_.print(AppConfig::Text::kMainScreenTitle);
+  display_.print(AppConfig::Text::kLcdStateLabel);
+  display_.print(" ");
+  display_.print(stateText);
 
   display_.setCursor(0, 16);
   display_.print(AppConfig::Text::kChannel1Label);
@@ -102,9 +109,9 @@ void DisplayController::renderChannels(unsigned long ch1, unsigned long ch2, uns
   }
 
   display_.setCursor(0, 48);
-  display_.print(AppConfig::Text::kDisplayModeLabel);
-  display_.println(isRemoteRequiredForDrive ? AppConfig::Text::kDisplayModeRemoteCheck
-                                            : AppConfig::Text::kDisplayModeNoCheck);
+  display_.print(AppConfig::Text::kSpeedLabel);
+  display_.print(speedInKiloMetersPerHour, 2);
+  display_.println(AppConfig::Text::kSpeedUnit);
   
   display_.display();
 }

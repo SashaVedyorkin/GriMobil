@@ -9,6 +9,7 @@ static const uint8_t kChannel2 = 3;
 static const uint8_t kChannel3 = 18;
 static const uint8_t kChannel4 = 19;
 static const uint8_t kDriveSafetyToggle = 22;
+static const uint8_t kTrackSensor = A9;
 static const uint8_t kEscSignal = 9;
 static const uint8_t kSteeringSignal = 8;
 static const uint8_t kSteeringPotentiometer = A0;
@@ -77,12 +78,26 @@ static const unsigned long kVisibleSignalMinInMicroSec = 900;
 static const unsigned long kVisibleSignalMaxInMicroSec = 2200;
 }  // namespace Display
 
+namespace Lcd1602 {
+static const uint8_t kColumns = 16;
+static const uint8_t kRows = 2;
+static const uint8_t kI2cAddress = 0x27;
+static const unsigned long kCh1NoSignalHoldInMilliSec = 5000;
+}  // namespace Lcd1602
+
+namespace Speedometer {
+static const float kWheelCircumferenceInCentiMeter = 74.0f;
+static const unsigned long kSignalTimeoutInMicroSec = 1500000;
+}  // namespace Speedometer
+
 namespace Serial {
 static const unsigned long kBaudRate = 9600;
 }  // namespace Serial
 
 namespace Text {
 static const char kStartupMonitorTitle[] = "RC Monitor";
+static const char kStartupReadyLine1[] = "GRI-MOBIL";
+static const char kStartupReadyLine2[] = "READY!!!";
 static const char kMainScreenTitle[] = "GriMobil 1.0";
 static const char kChannel1Label[] = "CH1: ";
 static const char kChannel2Label[] = "CH2: ";
@@ -104,6 +119,11 @@ static const char kDisplayReceiverSteering[] = "<X>";
 static const char kDisplayModeLabel[] = "Mode: ";
 static const char kDisplayModeNoCheck[] = "NC";
 static const char kDisplayModeRemoteCheck[] = "RCC";
+static const char kSpeedLabel[] = "V: ";
+static const char kSpeedUnit[] = " km/h";
+static const char kLcdStateLabel[] = "State:";
+static const char kLcdStateCorrect[] = "Correct";
+static const char kLcdStateCh1NoSignal[] = "ch1 nosig";
 static const char kShortNoSignal[] = "NS";
 }  // namespace Text
 

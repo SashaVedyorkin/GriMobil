@@ -1,6 +1,8 @@
 #include "SteeringController.h"
 
 namespace {
+static const unsigned long kSubMicroScale = 16;
+
 unsigned long constrainValue(unsigned long value, unsigned long minValue, unsigned long maxValue) {
   if (value < minValue) {
     return minValue;
@@ -15,6 +17,8 @@ unsigned long constrainValue(unsigned long value, unsigned long minValue, unsign
 SteeringController::SteeringController(uint8_t pin)
     : pin_(pin),
       currentPulseInMicroSec_(AppConfig::Steering::kOutputCenterInMicroSec),
+      currentPulseFixedInSubMicroSec_(AppConfig::Steering::kOutputCenterInMicroSec *
+                                      kSubMicroScale),
       latchedTargetPulseInMicroSec_(AppConfig::Steering::kOutputCenterInMicroSec),
       lastRampUpdateInMilliSec_(0),
       latchedDirection_(kCenterDirection) {}
@@ -22,6 +26,7 @@ SteeringController::SteeringController(uint8_t pin)
 void SteeringController::begin() {
   servo_.attach(pin_);
   currentPulseInMicroSec_ = AppConfig::Steering::kOutputCenterInMicroSec;
+  currentPulseFixedInSubMicroSec_ = currentPulseInMicroSec_ * kSubMicroScale;
   latchedTargetPulseInMicroSec_ = AppConfig::Steering::kOutputCenterInMicroSec;
   latchedDirection_ = kCenterDirection;
   lastRampUpdateInMilliSec_ = millis();
@@ -126,33 +131,47 @@ unsigned long SteeringController::smoothServoPulse(unsigned long targetPulseInMi
 
   lastRampUpdateInMilliSec_ = nowInMilliSec;
 
-  unsigned long deltaInMicroSec =
-      targetPulseInMicroSec > currentPulseInMicroSec_
-          ? targetPulseInMicroSec - currentPulseInMicroSec_
-          : currentPulseInMicroSec_ - targetPulseInMicroSec;
+  unsigned long targetPulseFixedInSubMicroSec = targetPulseInMicroSec * kSubMicroScale;
+  long deltaFixedInSubMicroSec =
+      (long)targetPulseFixedInSubMicroSec - (long)currentPulseFixedInSubMicroSec_;
+  unsigned long deltaInMicroSec = (unsigned long)(abs(deltaFixedInSubMicroSec) / kSubMicroScale);
 
   unsigned long rampStepInMicroSec = calculateRampStep(deltaInMicroSec);
+  unsigned long rampStepFixedInSubMicroSec = rampStepInMicroSec * kSubMicroScale;
 
-  if (deltaInMicroSec <= rampStepInMicroSec) {
+  if ((unsigned long)abs(deltaFixedInSubMicroSec) <= rampStepFixedInSubMicroSec) {
+    currentPulseFixedInSubMicroSec_ = targetPulseFixedInSubMicroSec;
     return targetPulseInMicroSec;
   }
 
-  if (targetPulseInMicroSec > currentPulseInMicroSec_) {
-    return currentPulseInMicroSec_ + rampStepInMicroSec;
+  long easedStepFixedInSubMicroSec =
+      deltaFixedInSubMicroSec / (long)AppConfig::Steering::kOutputRampEaseDivisor;
+
+  if (easedStepFixedInSubMicroSec == 0) {
+    easedStepFixedInSubMicroSec = deltaFixedInSubMicroSec > 0 ? 1 : -1;
   }
 
-  return currentPulseInMicroSec_ - rampStepInMicroSec;
+  if (easedStepFixedInSubMicroSec > (long)rampStepFixedInSubMicroSec) {
+    easedStepFixedInSubMicroSec = (long)rampStepFixedInSubMicroSec;
+  }
+
+  if (easedStepFixedInSubMicroSec < -(long)rampStepFixedInSubMicroSec) {
+    easedStepFixedInSubMicroSec = -(long)rampStepFixedInSubMicroSec;
+  }
+
+  currentPulseFixedInSubMicroSec_ += (long)easedStepFixedInSubMicroSec;
+  return (currentPulseFixedInSubMicroSec_ + (kSubMicroScale / 2)) / kSubMicroScale;
 }
 
 unsigned long SteeringController::calculateRampStep(unsigned long deltaInMicroSec) const {
   unsigned long maxStepInMicroSec = AppConfig::Steering::kOutputRampMaxStepInMicroSec;
-  unsigned long easeDivisor = AppConfig::Steering::kOutputRampEaseDivisor;
 
   if (deltaInMicroSec == 0) {
     return 0;
   }
 
-  unsigned long rampStepInMicroSec = deltaInMicroSec / easeDivisor;
+  unsigned long rampStepInMicroSec =
+      deltaInMicroSec / AppConfig::Steering::kOutputRampEaseDivisor;
 
   if (rampStepInMicroSec == 0) {
     rampStepInMicroSec = 1;

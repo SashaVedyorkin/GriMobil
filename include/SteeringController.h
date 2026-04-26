@@ -22,6 +22,7 @@ private:
   uint8_t pin_;
   Servo servo_;
   unsigned long currentPulseInMicroSec_;
+  unsigned long currentPulseFixedInSubMicroSec_;
   unsigned long latchedTargetPulseInMicroSec_;
   unsigned long lastRampUpdateInMilliSec_;
   SteeringDirection latchedDirection_;
