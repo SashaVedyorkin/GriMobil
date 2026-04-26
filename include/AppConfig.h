@@ -35,8 +35,8 @@ static const unsigned long kStartupDelayInMilliSec = 1000;
 namespace Drive {
 static const unsigned long kForwardSwitchThresholdInMicroSec = 1700;
 static const unsigned long kReverseSwitchThresholdInMicroSec = 1200;
-static const unsigned long kThrottleInputMinInMicroSec = 1240;
-static const unsigned long kThrottleInputMaxInMicroSec = 2000;
+static const unsigned long kThrottleInputLowPointInMicroSec = 1240;
+static const unsigned long kThrottleInputHighPointInMicroSec = 1860;
 static const unsigned long kForwardEscMaxInMicroSec = 2000;
 static const unsigned long kReverseEscMinInMicroSec = 1000;
 static const unsigned long kEscStepInMicroSec = 10;
@@ -124,6 +124,7 @@ static const char kSpeedUnit[] = " km/h";
 static const char kLcdStateLabel[] = "State:";
 static const char kLcdStateCorrect[] = "Correct";
 static const char kLcdStateCh1NoSignal[] = "ch1 nosig";
+static const char kLcdStateNoCheckMode[] = "no-check mode";
 static const char kShortNoSignal[] = "NS";
 }  // namespace Text
 

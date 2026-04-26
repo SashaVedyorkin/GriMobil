@@ -90,18 +90,18 @@ void DriveController::updateDriveMode(SwitchZone currentSwitchZone) {
 
 unsigned long DriveController::mapThrottleToEsc(unsigned long ch1PulseInMicroSec) const {
   unsigned long constrainedCh1PulseInMicroSec =
-      constrainPulse(ch1PulseInMicroSec, AppConfig::Drive::kThrottleInputMinInMicroSec,
-                     AppConfig::Drive::kThrottleInputMaxInMicroSec);
+      constrainPulse(ch1PulseInMicroSec, AppConfig::Drive::kThrottleInputLowPointInMicroSec,
+                     AppConfig::Drive::kThrottleInputHighPointInMicroSec);
 
   if (driveMode_ == kForward) {
-    return map(constrainedCh1PulseInMicroSec, AppConfig::Drive::kThrottleInputMinInMicroSec,
-               AppConfig::Drive::kThrottleInputMaxInMicroSec,
+    return map(constrainedCh1PulseInMicroSec, AppConfig::Drive::kThrottleInputLowPointInMicroSec,
+               AppConfig::Drive::kThrottleInputHighPointInMicroSec,
                AppConfig::Esc::kNeutralPulseInMicroSec,
                AppConfig::Drive::kForwardEscMaxInMicroSec);
   }
 
-  return map(constrainedCh1PulseInMicroSec, AppConfig::Drive::kThrottleInputMinInMicroSec,
-             AppConfig::Drive::kThrottleInputMaxInMicroSec,
+  return map(constrainedCh1PulseInMicroSec, AppConfig::Drive::kThrottleInputLowPointInMicroSec,
+             AppConfig::Drive::kThrottleInputHighPointInMicroSec,
              AppConfig::Esc::kNeutralPulseInMicroSec,
              AppConfig::Drive::kReverseEscMinInMicroSec);
 }

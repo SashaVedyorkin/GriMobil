@@ -8,6 +8,7 @@
 #include "RcInputController.h"
 #include "RcSignalValidator.h"
 #include "SerialController.h"
+#include "SpeedSensorController.h"
 #include "SteeringController.h"
 
 const byte ch1Pin = AppConfig::Pins::kChannel1;
@@ -15,12 +16,6 @@ const byte ch2Pin = AppConfig::Pins::kChannel2;
 const byte ch3Pin = AppConfig::Pins::kChannel3;
 const byte ch4Pin = AppConfig::Pins::kChannel4;
 const byte driveSafetyTogglePin = AppConfig::Pins::kDriveSafetyToggle;
-const byte trackSensorPin = AppConfig::Pins::kTrackSensor;
-
-volatile bool g_trackSensorActive = false;
-volatile bool g_lastTrackSensorLevelHigh = true;
-volatile unsigned long g_lastTrackSensorPulseAtInMicroSec = 0;
-volatile unsigned long g_lastTrackSensorIntervalInMicroSec = 0;
 
 unsigned long ch1 = AppConfig::Rc::kDefaultPulseInMicroSec;
 unsigned long ch2 = AppConfig::Rc::kDefaultPulseInMicroSec;
@@ -39,6 +34,7 @@ Lcd1602Controller lcd1602;
 DriveController drive;
 EscController esc(AppConfig::Pins::kEscSignal);
 SteeringController steering(AppConfig::Pins::kSteeringSignal);
+SpeedSensorController speedSensor(AppConfig::Pins::kTrackSensor);
 RcInputController rcInput(ch1Pin, ch2Pin, ch3Pin, ch4Pin);
 RcSignalValidator rcSignalValidator;
 
@@ -120,50 +116,18 @@ bool isRemoteDriveSignalAvailable(unsigned long throttlePulseInMicroSec,
   return throttlePulseInMicroSec != 0 && directionPulseInMicroSec != 0;
 }
 
-float calculateSpeedInKiloMetersPerHour(unsigned long pulseIntervalInMicroSec) {
-  if (pulseIntervalInMicroSec == 0) {
-    return 0.0f;
-  }
-
-  float revolutionsPerHour = 3600000000.0f / pulseIntervalInMicroSec;
-  float wheelCircumferenceInKiloMeter =
-      AppConfig::Speedometer::kWheelCircumferenceInCentiMeter / 100000.0f;
-
-  return wheelCircumferenceInKiloMeter * revolutionsPerHour;
-}
-
-void initializeTrackSensorInterrupt() {
-  pinMode(trackSensorPin, INPUT_PULLUP);
-  g_lastTrackSensorLevelHigh = (PINK & _BV(PK1)) != 0;
-  PCICR |= _BV(PCIE2);
-  PCMSK2 |= _BV(PCINT17);
+bool isRemoteSteeringSignalAvailable(unsigned long steeringPulseInMicroSec) {
+  return steeringPulseInMicroSec != 0;
 }
 
 }
-
-ISR(PCINT2_vect) {
-  bool isLevelHigh = (PINK & _BV(PK1)) != 0;
-  unsigned long nowInMicroSec = micros();
-
-  g_trackSensorActive = !isLevelHigh;
-
-  if (g_lastTrackSensorLevelHigh && !isLevelHigh) {
-    if (g_lastTrackSensorPulseAtInMicroSec != 0) {
-      g_lastTrackSensorIntervalInMicroSec = nowInMicroSec - g_lastTrackSensorPulseAtInMicroSec;
-    }
-    g_lastTrackSensorPulseAtInMicroSec = nowInMicroSec;
-  }
-
-  g_lastTrackSensorLevelHigh = isLevelHigh;
-}
-
 
 void setup() {
   serialMonitor.begin();
   Wire.begin();
   pinMode(AppConfig::Pins::kSteeringPotentiometer, INPUT);
   pinMode(driveSafetyTogglePin, INPUT);
-  initializeTrackSensorInterrupt();
+  speedSensor.begin();
   rcInput.begin();
   esc.begin();
   steering.begin();
@@ -180,37 +144,20 @@ void setup() {
 
 void loop() {
   unsigned long nowInMilliSec = millis();
-  unsigned long nowInMicroSec = micros();
   RcChannelSnapshot rcSnapshot = rcInput.read();
   RcChannelState rcState = rcSignalValidator.validate(rcSnapshot);
-  unsigned long lastTrackSensorPulseAtInMicroSec = 0;
-  unsigned long lastTrackSensorIntervalInMicroSec = 0;
-
-  noInterrupts();
-  isTrackSensorActive = g_trackSensorActive;
-  lastTrackSensorPulseAtInMicroSec = g_lastTrackSensorPulseAtInMicroSec;
-  lastTrackSensorIntervalInMicroSec = g_lastTrackSensorIntervalInMicroSec;
-  interrupts();
+  SpeedSensorSnapshot speedSnapshot = speedSensor.read();
 
   ch1 = rcState.ch1;
   ch2 = rcState.ch2;
   ch3 = rcState.ch3;
   ch4 = rcState.ch4;
   isRemoteRequiredForDrive = readDriveSafetyToggle();
+  isTrackSensorActive = speedSnapshot.isActive;
+  currentSpeedInKiloMetersPerHour = speedSnapshot.speedInKiloMetersPerHour;
 
   if (ch1 == 0) {
     lastCh1NoSignalAtInMilliSec = nowInMilliSec;
-  }
-
-  if (lastTrackSensorIntervalInMicroSec != 0) {
-    currentSpeedInKiloMetersPerHour =
-        calculateSpeedInKiloMetersPerHour(lastTrackSensorIntervalInMicroSec);
-  }
-
-  if (lastTrackSensorPulseAtInMicroSec != 0 &&
-      nowInMicroSec - lastTrackSensorPulseAtInMicroSec >
-          AppConfig::Speedometer::kSignalTimeoutInMicroSec) {
-    currentSpeedInKiloMetersPerHour = 0.0f;
   }
 
   bool isRemoteDriveSignalAvailableNow = isRemoteDriveSignalAvailable(ch1, ch3);
@@ -222,9 +169,13 @@ void loop() {
   }
 
   updateSteeringControlMode(ch4);
+  bool isRemoteSteeringSignalAvailableNow = isRemoteSteeringSignalAvailable(ch2);
+  bool isReceiverSteeringForced =
+      !isCarSteeringEnabled || (isRemoteRequiredForDrive && !isRemoteSteeringSignalAvailableNow);
+  bool isEffectiveCarSteeringEnabled = !isReceiverSteeringForced;
   unsigned long steeringInputPulseInMicroSec = AppConfig::Steering::kInputCenterInMicroSec;
 
-  if (!isCarSteeringEnabled) {
+  if (isReceiverSteeringForced) {
     if (ch2 != 0) {
       steeringInputPulseInMicroSec = ch2;
     }
@@ -258,15 +209,17 @@ void loop() {
       AppConfig::MainLoop::kDisplayUpdateIntervalInMilliSec) {
     const char* lcdStateText = AppConfig::Text::kLcdStateCorrect;
 
-    if (ch1 == 0 ||
-        (lastCh1NoSignalAtInMilliSec != 0 &&
-         nowInMilliSec - lastCh1NoSignalAtInMilliSec <=
-             AppConfig::Lcd1602::kCh1NoSignalHoldInMilliSec)) {
+    if (!isRemoteRequiredForDrive) {
+      lcdStateText = AppConfig::Text::kLcdStateNoCheckMode;
+    } else if (ch1 == 0 ||
+               (lastCh1NoSignalAtInMilliSec != 0 &&
+                nowInMilliSec - lastCh1NoSignalAtInMilliSec <=
+                    AppConfig::Lcd1602::kCh1NoSignalHoldInMilliSec)) {
       lcdStateText = AppConfig::Text::kLcdStateCh1NoSignal;
     }
 
     lastDisplayUpdateInMilliSec = nowInMilliSec;
-    display.renderChannels(ch1, ch2, ch3, isCarSteeringEnabled, isRemoteRequiredForDrive,
+    display.renderChannels(ch1, ch2, ch3, isEffectiveCarSteeringEnabled, isRemoteRequiredForDrive,
                            currentSpeedInKiloMetersPerHour, lcdStateText,
                            escResult.value,
                            steeringPulseInMicroSec,
