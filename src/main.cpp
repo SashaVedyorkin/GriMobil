@@ -106,11 +106,12 @@ void loop() {
   }
 
   bool isRemoteDriveSignalAvailableNow = isRemoteDriveSignalAvailable(ch1, ch3);
-  DriveUpdateResult driveResult = drive.update(ch1, ch3);
+  DriveUpdateResult driveResult = drive.update(hallThrottleRawValue, ch1, ch3);
 
   if (isRemoteRequiredForDrive && !isRemoteDriveSignalAvailableNow) {
-    driveResult = {AppConfig::Text::kDriveNoSignal, AppConfig::Esc::kNeutralPulseInMicroSec,
-                   false};
+    driveResult = {AppConfig::Text::kDriveNoSignal, driveResult.driveDisplayLabel,
+                   driveResult.throttleSourceLabel,
+                   AppConfig::Esc::kNeutralPulseInMicroSec, false};
   }
 
   SteeringInputResult steeringInputResult = steeringInput.resolve(ch2, ch4, isRemoteRequiredForDrive);
@@ -143,7 +144,8 @@ void loop() {
                            hallThrottleRawValue, lcdStateText,
                            escResult.value,
                            steeringPulseInMicroSec,
-                           driveResult.statusMessage);
+                           driveResult.driveDisplayLabel,
+                           driveResult.throttleSourceLabel);
     lcd1602.render(currentSpeedInKiloMetersPerHour, batteryVoltageSnapshot);
   }
 }

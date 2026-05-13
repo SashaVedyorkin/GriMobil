@@ -26,7 +26,7 @@ void DisplayController::renderChannels(unsigned long ch1, unsigned long ch2, uns
                                        int hallThrottleRawValue,
                                        const char* stateText) {
   renderChannels(ch1, ch2, ch3, isCarSteeringEnabled, isRemoteRequiredForDrive,
-                 hallThrottleRawValue, stateText, 0, 0, "");
+                 hallThrottleRawValue, stateText, 0, 0, "", "");
 }
 
 int DisplayController::toPercent(unsigned long pulse) const {
@@ -45,26 +45,6 @@ bool DisplayController::isSignalVisible(unsigned long pulse) const {
          pulse < AppConfig::Display::kVisibleSignalMaxInMicroSec;
 }
 
-const char* DisplayController::getDriveDisplayLabel(const char* status) const {
-  if (status == nullptr || status[0] == '\0') {
-    return AppConfig::Text::kDisplayDriveNeutral;
-  }
-
-  if (strcmp(status, AppConfig::Text::kDriveForward) == 0) {
-    return AppConfig::Text::kDisplayDriveForward;
-  }
-
-  if (strcmp(status, AppConfig::Text::kDriveReverse) == 0) {
-    return AppConfig::Text::kDisplayDriveReverse;
-  }
-
-  if (strcmp(status, AppConfig::Text::kDriveNoSignal) == 0) {
-    return AppConfig::Text::kDriveNoSignal;
-  }
-
-  return AppConfig::Text::kDisplayDriveNeutral;
-}
-
 const char* DisplayController::getModeDisplayLabel(bool isRemoteRequiredForDrive) const {
   return isRemoteRequiredForDrive ? AppConfig::Text::kDisplayModeRemoteCheck
                                   : AppConfig::Text::kDisplayModeNoCheck;
@@ -76,7 +56,9 @@ void DisplayController::renderChannels(unsigned long ch1, unsigned long ch2, uns
                                        int hallThrottleRawValue,
                                        const char* stateText,
                                        unsigned long escPulseInMicroSec,
-                                       unsigned long steeringPulseInMicroSec, const char* custom) {
+                                       unsigned long steeringPulseInMicroSec,
+                                       const char* custom,
+                                       const char* throttleSourceLabel) {
   display_.clearDisplay();
   display_.setCursor(0, 0);
   display_.print(AppConfig::Text::kLcdStateLabel);
@@ -87,13 +69,13 @@ void DisplayController::renderChannels(unsigned long ch1, unsigned long ch2, uns
   display_.print(AppConfig::Text::kChannel1Label);
   if (isSignalVisible(ch1)) {
     display_.print(ch1);
-    display_.print(" ");
-    display_.print(escPulseInMicroSec);
-    display_.print(" ");
-    display_.println(getDriveDisplayLabel(custom));
   } else {
-    display_.println(AppConfig::Text::kDriveNoSignal);
+    display_.print(throttleSourceLabel);
   }
+  display_.print(" ");
+  display_.print(escPulseInMicroSec);
+  display_.print(" ");
+  display_.println(custom);
 
   display_.setCursor(0, 32);
   display_.print(AppConfig::Text::kChannel2Label);

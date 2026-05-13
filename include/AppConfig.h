@@ -55,6 +55,11 @@ static const unsigned long kEscRampStepInMicroSec = 8;
 static const unsigned long kEscFastStopRampStepInMicroSec = 40;
 }  // namespace Drive
 
+namespace HallThrottle {
+static const int kUpperPointRaw = 509;
+static const int kLowerPointRaw = 350;
+}  // namespace HallThrottle
+
 namespace Steering {
 static const unsigned long kInputCenterInMicroSec = 1580;
 static const unsigned long kInputLeftMaxInMicroSec = 1900;
@@ -108,7 +113,7 @@ static const unsigned long kCh1NoSignalHoldInMilliSec = 5000;
 
 namespace Speedometer {
 static const float kWheelCircumferenceInCentiMeter = 74.0f;
-static const uint8_t kPulsesPerWheelRevolution = 6;
+static const uint8_t kPulsesPerWheelRotation = 6;
 static const unsigned long kKeepLastSpeedTimeoutInMicroSec = 1500000;
 }  // namespace Speedometer
 

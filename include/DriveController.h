@@ -6,6 +6,8 @@
 
 struct DriveUpdateResult {
   const char* statusMessage;
+  const char* driveDisplayLabel;
+  const char* throttleSourceLabel;
   unsigned long escPulseInMicroSec;
   bool isSignalValid;
 };
@@ -14,7 +16,8 @@ class DriveController {
 public:
   DriveController();
 
-  DriveUpdateResult update(unsigned long ch1PulseInMicroSec, unsigned long ch3PulseInMicroSec);
+  DriveUpdateResult update(int hallThrottleRawValue, unsigned long ch1PulseInMicroSec,
+                           unsigned long ch3PulseInMicroSec);
 
 private:
   enum DriveMode {
@@ -35,9 +38,13 @@ private:
 
   SwitchZone detectSwitchZone(unsigned long ch3PulseInMicroSec) const;
   void updateDriveMode(SwitchZone currentSwitchZone);
-  unsigned long mapThrottleToEsc(unsigned long ch1PulseInMicroSec) const;
+  unsigned long mapThrottleToEsc(int hallThrottleRawValue) const;
+  unsigned long mapReceiverThrottleToEsc(unsigned long ch1PulseInMicroSec) const;
+  unsigned long selectThrottleTargetEscPulse(int hallThrottleRawValue,
+                                             unsigned long ch1PulseInMicroSec) const;
   unsigned long quantizeEscPulse(unsigned long targetEscPulseInMicroSec) const;
   unsigned long applyEscHysteresis(unsigned long targetEscPulseInMicroSec) const;
   unsigned long smoothEscPulse(unsigned long targetEscPulseInMicroSec) const;
   const char* getStatusMessage(bool isSignalValid) const;
+  const char* getDriveDisplayLabel() const;
 };

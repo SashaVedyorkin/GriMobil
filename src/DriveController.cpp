@@ -10,6 +10,12 @@ unsigned long constrainPulse(unsigned long value, unsigned long minValue, unsign
   }
   return value;
 }
+
+unsigned long getDeltaFromNeutralInMicroSec(unsigned long pulseInMicroSec) {
+  unsigned long neutralPulseInMicroSec = AppConfig::Esc::kNeutralPulseInMicroSec;
+  return pulseInMicroSec > neutralPulseInMicroSec ? pulseInMicroSec - neutralPulseInMicroSec
+                                                  : neutralPulseInMicroSec - pulseInMicroSec;
+}
 }  // namespace
 
 DriveController::DriveController()
@@ -17,43 +23,47 @@ DriveController::DriveController()
       lastSwitchZone_(kCenter),
       lastEscPulseInMicroSec_(AppConfig::Esc::kNeutralPulseInMicroSec) {}
 
-DriveUpdateResult DriveController::update(unsigned long ch1PulseInMicroSec,
+DriveUpdateResult DriveController::update(int hallThrottleRawValue,
+                                          unsigned long ch1PulseInMicroSec,
                                           unsigned long ch3PulseInMicroSec) {
-  bool isCh1Valid = ch1PulseInMicroSec != 0;
   bool isCh3Valid = ch3PulseInMicroSec != 0;
 
   if (!isCh3Valid) {
-    driveMode_ = kNeutral;
     lastSwitchZone_ = kCenter;
     unsigned long smoothNeutralPulseInMicroSec =
         smoothEscPulse(AppConfig::Esc::kNeutralPulseInMicroSec);
     lastEscPulseInMicroSec_ = smoothNeutralPulseInMicroSec;
-    return {AppConfig::Text::kDriveNoSignal, smoothNeutralPulseInMicroSec, false};
+    return {AppConfig::Text::kDriveNoSignal, getDriveDisplayLabel(), "P",
+            smoothNeutralPulseInMicroSec, false};
   }
 
   SwitchZone currentSwitchZone = detectSwitchZone(ch3PulseInMicroSec);
   updateDriveMode(currentSwitchZone);
 
-  if (!isCh1Valid) {
-    unsigned long smoothNeutralPulseInMicroSec =
-        smoothEscPulse(AppConfig::Esc::kNeutralPulseInMicroSec);
-    lastEscPulseInMicroSec_ = smoothNeutralPulseInMicroSec;
-    return {AppConfig::Text::kDriveNoSignal, smoothNeutralPulseInMicroSec, false};
-  }
-
   if (driveMode_ == kNeutral) {
     unsigned long smoothNeutralPulseInMicroSec =
         smoothEscPulse(AppConfig::Esc::kNeutralPulseInMicroSec);
     lastEscPulseInMicroSec_ = smoothNeutralPulseInMicroSec;
-    return {AppConfig::Text::kDriveNeutral, smoothNeutralPulseInMicroSec, true};
+    return {AppConfig::Text::kDriveNeutral, getDriveDisplayLabel(), "P",
+            smoothNeutralPulseInMicroSec, true};
   }
 
-  unsigned long targetEscPulseInMicroSec = mapThrottleToEsc(ch1PulseInMicroSec);
+  unsigned long hallTargetEscPulseInMicroSec = mapThrottleToEsc(hallThrottleRawValue);
+  unsigned long receiverTargetEscPulseInMicroSec = mapReceiverThrottleToEsc(ch1PulseInMicroSec);
+  unsigned long targetEscPulseInMicroSec =
+      selectThrottleTargetEscPulse(hallThrottleRawValue, ch1PulseInMicroSec);
+  const char* throttleSourceLabel =
+      ch1PulseInMicroSec != 0 &&
+              getDeltaFromNeutralInMicroSec(receiverTargetEscPulseInMicroSec) >=
+                  getDeltaFromNeutralInMicroSec(hallTargetEscPulseInMicroSec)
+          ? "RC"
+          : "P";
   unsigned long quantizedEscPulseInMicroSec = applyEscHysteresis(targetEscPulseInMicroSec);
   unsigned long smoothEscPulseInMicroSec = smoothEscPulse(quantizedEscPulseInMicroSec);
   lastEscPulseInMicroSec_ = smoothEscPulseInMicroSec;
 
-  return {getStatusMessage(true), smoothEscPulseInMicroSec, true};
+  return {getStatusMessage(true), getDriveDisplayLabel(), throttleSourceLabel,
+          smoothEscPulseInMicroSec, true};
 }
 
 DriveController::SwitchZone DriveController::detectSwitchZone(unsigned long ch3PulseInMicroSec) const {
@@ -88,7 +98,33 @@ void DriveController::updateDriveMode(SwitchZone currentSwitchZone) {
   lastSwitchZone_ = currentSwitchZone;
 }
 
-unsigned long DriveController::mapThrottleToEsc(unsigned long ch1PulseInMicroSec) const {
+unsigned long DriveController::mapThrottleToEsc(int hallThrottleRawValue) const {
+  int constrainedHallThrottleRawValue = hallThrottleRawValue;
+  if (constrainedHallThrottleRawValue > AppConfig::HallThrottle::kUpperPointRaw) {
+    constrainedHallThrottleRawValue = AppConfig::HallThrottle::kUpperPointRaw;
+  }
+  if (constrainedHallThrottleRawValue < AppConfig::HallThrottle::kLowerPointRaw) {
+    constrainedHallThrottleRawValue = AppConfig::HallThrottle::kLowerPointRaw;
+  }
+
+  if (driveMode_ == kForward) {
+    return map(constrainedHallThrottleRawValue, AppConfig::HallThrottle::kUpperPointRaw,
+               AppConfig::HallThrottle::kLowerPointRaw,
+               AppConfig::Esc::kNeutralPulseInMicroSec,
+               AppConfig::Drive::kForwardEscMaxInMicroSec);
+  }
+
+  return map(constrainedHallThrottleRawValue, AppConfig::HallThrottle::kUpperPointRaw,
+             AppConfig::HallThrottle::kLowerPointRaw,
+             AppConfig::Esc::kNeutralPulseInMicroSec,
+             AppConfig::Drive::kReverseEscMinInMicroSec);
+}
+
+unsigned long DriveController::mapReceiverThrottleToEsc(unsigned long ch1PulseInMicroSec) const {
+  if (ch1PulseInMicroSec == 0) {
+    return AppConfig::Esc::kNeutralPulseInMicroSec;
+  }
+
   unsigned long constrainedCh1PulseInMicroSec =
       constrainPulse(ch1PulseInMicroSec, AppConfig::Drive::kThrottleInputLowPointInMicroSec,
                      AppConfig::Drive::kThrottleInputHighPointInMicroSec);
@@ -104,6 +140,28 @@ unsigned long DriveController::mapThrottleToEsc(unsigned long ch1PulseInMicroSec
              AppConfig::Drive::kThrottleInputHighPointInMicroSec,
              AppConfig::Esc::kNeutralPulseInMicroSec,
              AppConfig::Drive::kReverseEscMinInMicroSec);
+}
+
+unsigned long DriveController::selectThrottleTargetEscPulse(int hallThrottleRawValue,
+                                                            unsigned long ch1PulseInMicroSec) const {
+  unsigned long hallTargetEscPulseInMicroSec = mapThrottleToEsc(hallThrottleRawValue);
+  unsigned long receiverTargetEscPulseInMicroSec = mapReceiverThrottleToEsc(ch1PulseInMicroSec);
+
+  unsigned long neutralPulseInMicroSec = AppConfig::Esc::kNeutralPulseInMicroSec;
+  unsigned long hallDeltaInMicroSec =
+      hallTargetEscPulseInMicroSec > neutralPulseInMicroSec
+          ? hallTargetEscPulseInMicroSec - neutralPulseInMicroSec
+          : neutralPulseInMicroSec - hallTargetEscPulseInMicroSec;
+  unsigned long receiverDeltaInMicroSec =
+      receiverTargetEscPulseInMicroSec > neutralPulseInMicroSec
+          ? receiverTargetEscPulseInMicroSec - neutralPulseInMicroSec
+          : neutralPulseInMicroSec - receiverTargetEscPulseInMicroSec;
+
+  if (ch1PulseInMicroSec != 0 && receiverDeltaInMicroSec >= hallDeltaInMicroSec) {
+    return receiverTargetEscPulseInMicroSec;
+  }
+
+  return hallTargetEscPulseInMicroSec;
 }
 
 unsigned long DriveController::quantizeEscPulse(unsigned long targetEscPulseInMicroSec) const {
@@ -176,4 +234,16 @@ const char* DriveController::getStatusMessage(bool isSignalValid) const {
   }
 
   return AppConfig::Text::kDriveNeutral;
+}
+
+const char* DriveController::getDriveDisplayLabel() const {
+  if (driveMode_ == kForward) {
+    return AppConfig::Text::kDisplayDriveForward;
+  }
+
+  if (driveMode_ == kReverse) {
+    return AppConfig::Text::kDisplayDriveReverse;
+  }
+
+  return AppConfig::Text::kDisplayDriveNeutral;
 }

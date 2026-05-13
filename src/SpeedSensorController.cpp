@@ -10,7 +10,7 @@ float calculateSpeedInKiloMetersPerHour(unsigned long pulseIntervalInMicroSec) {
 
   float revolutionsPerHour =
       (3600000000.0f / pulseIntervalInMicroSec) /
-      AppConfig::Speedometer::kPulsesPerWheelRevolution;
+      AppConfig::Speedometer::kPulsesPerWheelRotation;
   float wheelCircumferenceInKiloMeter =
       AppConfig::Speedometer::kWheelCircumferenceInCentiMeter / 100000.0f;
 
