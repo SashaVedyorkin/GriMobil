@@ -1,9 +1,9 @@
 #pragma once
 
 #include <Arduino.h>
-#include <Servo.h>
 
 #include "AppConfig.h"
+#include "Pca9685Controller.h"
 
 struct EscUpdateResult {
   unsigned long value;
@@ -18,5 +18,4 @@ public:
 
 private:
   uint8_t pin_;
-  Servo esc_;
 };

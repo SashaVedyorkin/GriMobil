@@ -8,7 +8,9 @@ float calculateSpeedInKiloMetersPerHour(unsigned long pulseIntervalInMicroSec) {
     return 0.0f;
   }
 
-  float revolutionsPerHour = 3600000000.0f / pulseIntervalInMicroSec;
+  float revolutionsPerHour =
+      (3600000000.0f / pulseIntervalInMicroSec) /
+      AppConfig::Speedometer::kPulsesPerWheelRevolution;
   float wheelCircumferenceInKiloMeter =
       AppConfig::Speedometer::kWheelCircumferenceInCentiMeter / 100000.0f;
 
@@ -51,8 +53,8 @@ SpeedSensorSnapshot SpeedSensorController::read() const {
 
   if (lastPulseAtInMicroSec != 0 &&
       nowInMicroSec - lastPulseAtInMicroSec >
-          AppConfig::Speedometer::kSignalTimeoutInMicroSec) {
-    speedInKiloMetersPerHour = 0.0f;
+          AppConfig::Speedometer::kKeepLastSpeedTimeoutInMicroSec) {
+    return {isActive, 0.0f};
   }
 
   return {isActive, speedInKiloMetersPerHour};

@@ -19,10 +19,10 @@ public:
   DisplayBeginResult begin();
   void renderChannels(unsigned long ch1, unsigned long ch2, unsigned long ch3,
                       bool isCarSteeringEnabled, bool isRemoteRequiredForDrive,
-                      float speedInKiloMetersPerHour, const char* stateText);
+                      int hallThrottleRawValue, const char* stateText);
   void renderChannels(unsigned long ch1, unsigned long ch2, unsigned long ch3,
                       bool isCarSteeringEnabled, bool isRemoteRequiredForDrive,
-                      float speedInKiloMetersPerHour, const char* stateText,
+                      int hallThrottleRawValue, const char* stateText,
                       unsigned long escPulseInMicroSec, unsigned long steeringPulseInMicroSec,
                       const char* custom);
 
@@ -31,4 +31,5 @@ private:
   int toPercent(unsigned long pulse) const;
   bool isSignalVisible(unsigned long pulse) const;
   const char* getDriveDisplayLabel(const char* status) const;
+  const char* getModeDisplayLabel(bool isRemoteRequiredForDrive) const;
 };

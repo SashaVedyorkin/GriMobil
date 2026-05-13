@@ -23,10 +23,10 @@ DisplayBeginResult DisplayController::begin() {
 void DisplayController::renderChannels(unsigned long ch1, unsigned long ch2, unsigned long ch3,
                                        bool isCarSteeringEnabled,
                                        bool isRemoteRequiredForDrive,
-                                       float speedInKiloMetersPerHour,
+                                       int hallThrottleRawValue,
                                        const char* stateText) {
   renderChannels(ch1, ch2, ch3, isCarSteeringEnabled, isRemoteRequiredForDrive,
-                 speedInKiloMetersPerHour, stateText, 0, 0, "");
+                 hallThrottleRawValue, stateText, 0, 0, "");
 }
 
 int DisplayController::toPercent(unsigned long pulse) const {
@@ -65,10 +65,15 @@ const char* DisplayController::getDriveDisplayLabel(const char* status) const {
   return AppConfig::Text::kDisplayDriveNeutral;
 }
 
+const char* DisplayController::getModeDisplayLabel(bool isRemoteRequiredForDrive) const {
+  return isRemoteRequiredForDrive ? AppConfig::Text::kDisplayModeRemoteCheck
+                                  : AppConfig::Text::kDisplayModeNoCheck;
+}
+
 void DisplayController::renderChannels(unsigned long ch1, unsigned long ch2, unsigned long ch3,
                                        bool isCarSteeringEnabled,
                                        bool isRemoteRequiredForDrive,
-                                       float speedInKiloMetersPerHour,
+                                       int hallThrottleRawValue,
                                        const char* stateText,
                                        unsigned long escPulseInMicroSec,
                                        unsigned long steeringPulseInMicroSec, const char* custom) {
@@ -109,9 +114,10 @@ void DisplayController::renderChannels(unsigned long ch1, unsigned long ch2, uns
   }
 
   display_.setCursor(0, 48);
-  display_.print(AppConfig::Text::kSpeedLabel);
-  display_.print(speedInKiloMetersPerHour, 2);
-  display_.println(AppConfig::Text::kSpeedUnit);
+  display_.print(AppConfig::Text::kHallLabel);
+  display_.print(hallThrottleRawValue);
+  display_.setCursor(110, 48);
+  display_.print(getModeDisplayLabel(isRemoteRequiredForDrive));
   
   display_.display();
 }
