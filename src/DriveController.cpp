@@ -30,22 +30,17 @@ DriveUpdateResult DriveController::update(int hallThrottleRawValue,
 
   if (!isCh3Valid) {
     lastSwitchZone_ = kCenter;
-    unsigned long smoothNeutralPulseInMicroSec =
-        smoothEscPulse(AppConfig::Esc::kNeutralPulseInMicroSec);
-    lastEscPulseInMicroSec_ = smoothNeutralPulseInMicroSec;
-    return {AppConfig::Text::kDriveNoSignal, getDriveDisplayLabel(), "P",
-            smoothNeutralPulseInMicroSec, false};
+  } else {
+    SwitchZone currentSwitchZone = detectSwitchZone(ch3PulseInMicroSec);
+    updateDriveMode(currentSwitchZone);
   }
-
-  SwitchZone currentSwitchZone = detectSwitchZone(ch3PulseInMicroSec);
-  updateDriveMode(currentSwitchZone);
 
   if (driveMode_ == kNeutral) {
     unsigned long smoothNeutralPulseInMicroSec =
         smoothEscPulse(AppConfig::Esc::kNeutralPulseInMicroSec);
     lastEscPulseInMicroSec_ = smoothNeutralPulseInMicroSec;
-    return {AppConfig::Text::kDriveNeutral, getDriveDisplayLabel(), "P",
-            smoothNeutralPulseInMicroSec, true};
+    return {isCh3Valid ? AppConfig::Text::kDriveNeutral : AppConfig::Text::kDriveNoSignal,
+            getDriveDisplayLabel(), "P", smoothNeutralPulseInMicroSec, isCh3Valid};
   }
 
   unsigned long hallTargetEscPulseInMicroSec = mapThrottleToEsc(hallThrottleRawValue);
@@ -62,8 +57,8 @@ DriveUpdateResult DriveController::update(int hallThrottleRawValue,
   unsigned long smoothEscPulseInMicroSec = smoothEscPulse(quantizedEscPulseInMicroSec);
   lastEscPulseInMicroSec_ = smoothEscPulseInMicroSec;
 
-  return {getStatusMessage(true), getDriveDisplayLabel(), throttleSourceLabel,
-          smoothEscPulseInMicroSec, true};
+  return {getStatusMessage(isCh3Valid), getDriveDisplayLabel(), throttleSourceLabel,
+          smoothEscPulseInMicroSec, isCh3Valid};
 }
 
 DriveController::SwitchZone DriveController::detectSwitchZone(unsigned long ch3PulseInMicroSec) const {
