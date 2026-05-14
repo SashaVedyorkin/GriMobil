@@ -74,9 +74,6 @@ static const unsigned long kReceiverLockThresholdInMicroSec = 1200;
 static const unsigned long kOutputCenterInMicroSec = 1500;
 static const unsigned long kOutputLeftMaxInMicroSec = 2000;
 static const unsigned long kOutputRightMaxInMicroSec = 1000;
-static const unsigned long kOutputRampMaxStepInMicroSec = 70;
-static const unsigned long kOutputRampEaseDivisor = 3;
-static const unsigned long kOutputRampIntervalInMilliSec = 2;
 static const unsigned long kStartupDelayInMilliSec = 300;
 }  // namespace Steering
 
@@ -163,6 +160,7 @@ static const char kShortNoSignal[] = "NS";
 namespace MainLoop {
 static const unsigned long kMotorUpdateIntervalInMilliSec = 5;
 static const unsigned long kDisplayUpdateIntervalInMilliSec = 50;
+static const unsigned long kBatteryUpdateIntervalInMilliSec = 50;
 static const unsigned long kSerialUpdateIntervalInMilliSec = 100;
 }  // Main
 }

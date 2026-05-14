@@ -19,17 +19,17 @@ void Lcd1602Controller::begin() {
   lcd_.print(AppConfig::Text::kStartupReadyLine2);
 }
 
-void Lcd1602Controller::render(float speedInKiloMetersPerHour, BatteryVoltageSnapshot batteryVoltage) {
+void Lcd1602Controller::render(const Lcd1602Snapshot& snapshot) {
   char speedLine[17];
   char speedValue[8];
   char voltageLine[17];
 
-  dtostrf(speedInKiloMetersPerHour, 4, 2, speedValue);
+  dtostrf(snapshot.speedInKiloMetersPerHour, 4, 2, speedValue);
   snprintf(speedLine, sizeof(speedLine), "V:%s km/h      ", speedValue);
 
-  if (batteryVoltage.isDefined) {
+  if (snapshot.batteryVoltage.isDefined) {
     char voltageValue[8];
-    dtostrf(batteryVoltage.voltageInVolts, 4, 2, voltageValue);
+    dtostrf(snapshot.batteryVoltage.voltageInVolts, 4, 2, voltageValue);
     snprintf(voltageLine, sizeof(voltageLine), "%s%s%s      ", AppConfig::Text::kVoltageLabel,
              voltageValue, AppConfig::Text::kVoltageUnit);
   } else {

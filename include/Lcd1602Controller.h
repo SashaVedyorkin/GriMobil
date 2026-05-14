@@ -4,14 +4,14 @@
 #include <LiquidCrystal_I2C.h>
 
 #include "AppConfig.h"
-#include "BatteryVoltageController.h"
+#include "DisplaySnapshot.h"
 
 class Lcd1602Controller {
 public:
   Lcd1602Controller();
 
   void begin();
-  void render(float speedInKiloMetersPerHour, BatteryVoltageSnapshot batteryVoltage);
+  void render(const Lcd1602Snapshot& snapshot);
 
 private:
   LiquidCrystal_I2C lcd_;

@@ -18,16 +18,15 @@ float calculateSpeedInKiloMetersPerHour(unsigned long pulseIntervalInMicroSec) {
 }
 }  // namespace
 
-SpeedSensorController::SpeedSensorController(uint8_t pin)
-    : pin_(pin),
-      isActive_(false),
+SpeedSensorController::SpeedSensorController()
+    : isActive_(false),
       lastLevelHigh_(true),
       lastPulseAtInMicroSec_(0),
       lastIntervalInMicroSec_(0) {}
 
 void SpeedSensorController::begin() {
   instance_ = this;
-  pinMode(pin_, INPUT_PULLUP);
+  pinMode(AppConfig::Pins::kTrackSensor, INPUT_PULLUP);
   lastLevelHigh_ = (PINK & _BV(PK1)) != 0;
   PCICR |= _BV(PCIE2);
   PCMSK2 |= _BV(PCINT17);

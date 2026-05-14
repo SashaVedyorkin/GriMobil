@@ -11,7 +11,6 @@ public:
   void begin();
   void logLine(const char* message);
   void logLine(const __FlashStringHelper* message);
-  void logLine(const String& message);
   void logValue(unsigned long value);
 
 private:

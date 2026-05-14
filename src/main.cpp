@@ -3,6 +3,7 @@
 #include "AppConfig.h"
 #include "BatteryVoltageController.h"
 #include "DisplayController.h"
+#include "DisplaySnapshot.h"
 #include "DriveController.h"
 #include "DriveModeButtonController.h"
 #include "EscController.h"
@@ -15,16 +16,14 @@
 #include "SteeringCorrector.h"
 #include "SteeringController.h"
 #include "SteeringInputController.h"
+#include "SystemStateController.h"
 
 unsigned long ch1 = AppConfig::Rc::kDefaultPulseInMicroSec;
 unsigned long ch2 = AppConfig::Rc::kDefaultPulseInMicroSec;
 unsigned long ch3 = AppConfig::Rc::kDefaultPulseInMicroSec;
 unsigned long ch4 = AppConfig::Rc::kDefaultPulseInMicroSec;
 bool isRemoteRequiredForDrive = false;
-bool isTrackSensorActive = false;
-float currentSpeedInKiloMetersPerHour = 0.0f;
 int hallThrottleRawValue = 0;
-unsigned long lastCh1NoSignalAtInMilliSec = 0;
 
 SerialController serialMonitor;
 DisplayController display;
@@ -32,7 +31,7 @@ Lcd1602Controller lcd1602;
 DriveController drive;
 EscController esc(AppConfig::Pca9685::kEscChannel);
 SteeringController steering(AppConfig::Pca9685::kSteeringChannel);
-SpeedSensorController speedSensor(AppConfig::Pins::kTrackSensor);
+SpeedSensorController speedSensor;
 BatteryVoltageController batteryVoltage(AppConfig::Pins::kBatteryVoltage);
 SteeringCorrector steeringCorrector;
 SteeringInputController steeringInput(AppConfig::Pins::kSteeringPotentiometer,
@@ -42,10 +41,13 @@ DriveModeButtonController driveModeButton(AppConfig::Pins::kDriveForwardButton,
 RcInputController rcInput(AppConfig::Pins::kChannel1, AppConfig::Pins::kChannel2,
                           AppConfig::Pins::kChannel3, AppConfig::Pins::kChannel4);
 RcSignalValidator rcSignalValidator;
+SystemStateController systemState;
 
 unsigned long lastMotorUpdateInMilliSec = 0;
 unsigned long lastDisplayUpdateInMilliSec = 0;
-unsigned long lastSerialUpdateInMilliSec = 0;
+unsigned long lastBatteryUpdateInMilliSec = 0;
+unsigned long lastAppliedEscPulseInMicroSec = AppConfig::Esc::kNeutralPulseInMicroSec;
+BatteryVoltageSnapshot lastBatteryVoltageSnapshot = {false, 0.0f};
 MedianFilter<AppConfig::Rc::kMedianFilterSampleCount> ch1MedianFilter;
 MedianFilter<AppConfig::Rc::kMedianFilterSampleCount> ch2MedianFilter;
 
@@ -86,7 +88,6 @@ void loop() {
   RcChannelSnapshot rcSnapshot = rcInput.read();
   RcChannelState rcState = rcSignalValidator.validate(rcSnapshot);
   SpeedSensorSnapshot speedSnapshot = speedSensor.read();
-  BatteryVoltageSnapshot batteryVoltageSnapshot = batteryVoltage.read();
 
   ch1 = rcState.ch1;
   ch2 = rcState.ch2;
@@ -95,21 +96,22 @@ void loop() {
   ch1 = ch1MedianFilter.apply(ch1);
   ch2 = ch2MedianFilter.apply(ch2);
   isRemoteRequiredForDrive = readDriveSafetyToggle();
-  isTrackSensorActive = speedSnapshot.isActive;
-  currentSpeedInKiloMetersPerHour = speedSnapshot.speedInKiloMetersPerHour;
   hallThrottleRawValue = analogRead(AppConfig::Pins::kHallThrottleSensor);
 
-  unsigned long driveDirectionButtonPulseInMicroSec = driveModeButton.readOverridePulseInMicroSec();
-  if (driveDirectionButtonPulseInMicroSec != 0) {
+  SteeringInputResult steeringInputResult =
+      steeringInput.resolve(ch2, ch4, isRemoteRequiredForDrive);
+  bool isLocalChildControlsEnabled = steeringInputResult.isEffectiveCarSteeringEnabled;
+
+  unsigned long driveDirectionButtonPulseInMicroSec =
+      driveModeButton.readOverridePulseInMicroSec();
+  if (isLocalChildControlsEnabled && driveDirectionButtonPulseInMicroSec != 0) {
     ch3 = driveDirectionButtonPulseInMicroSec;
   }
 
-  if (ch1 == 0) {
-    lastCh1NoSignalAtInMilliSec = nowInMilliSec;
-  }
-
   bool isRemoteDriveSignalAvailableNow = isRemoteDriveSignalAvailable(ch1, ch3);
-  DriveUpdateResult driveResult = drive.update(hallThrottleRawValue, ch1, ch3);
+  bool isRemoteThrottleSignalAvailableNow = ch1 != 0;
+  DriveUpdateResult driveResult =
+      drive.update(hallThrottleRawValue, ch1, ch3, isLocalChildControlsEnabled);
 
   if (isRemoteRequiredForDrive && !isRemoteDriveSignalAvailableNow) {
     driveResult = {AppConfig::Text::kDriveNoSignal, driveResult.driveDisplayLabel,
@@ -117,38 +119,43 @@ void loop() {
                    AppConfig::Esc::kNeutralPulseInMicroSec, false};
   }
 
-  SteeringInputResult steeringInputResult = steeringInput.resolve(ch2, ch4, isRemoteRequiredForDrive);
   unsigned long steeringPulseInMicroSec = steering.update(steeringInputResult.pulseInMicroSec);
-  EscUpdateResult escResult = {AppConfig::Esc::kNeutralPulseInMicroSec};
 
   if (nowInMilliSec - lastMotorUpdateInMilliSec >=
       AppConfig::MainLoop::kMotorUpdateIntervalInMilliSec) {
     lastMotorUpdateInMilliSec = nowInMilliSec;
-    escResult = esc.update(driveResult.escPulseInMicroSec);
+    EscUpdateResult escResult = esc.update(driveResult.escPulseInMicroSec);
+    lastAppliedEscPulseInMicroSec = escResult.value;
+  }
+
+  if (nowInMilliSec - lastBatteryUpdateInMilliSec >=
+      AppConfig::MainLoop::kBatteryUpdateIntervalInMilliSec) {
+    lastBatteryUpdateInMilliSec = nowInMilliSec;
+    lastBatteryVoltageSnapshot = batteryVoltage.read();
   }
 
   if (nowInMilliSec - lastDisplayUpdateInMilliSec >=
       AppConfig::MainLoop::kDisplayUpdateIntervalInMilliSec) {
-    const char* lcdStateText = AppConfig::Text::kLcdStateCorrect;
-
-    if (!isRemoteRequiredForDrive) {
-      lcdStateText = AppConfig::Text::kLcdStateNoCheckMode;
-    } else if (ch1 == 0 ||
-               (lastCh1NoSignalAtInMilliSec != 0 &&
-                nowInMilliSec - lastCh1NoSignalAtInMilliSec <=
-                    AppConfig::Lcd1602::kCh1NoSignalHoldInMilliSec)) {
-      lcdStateText = AppConfig::Text::kLcdStateCh1NoSignal;
-    }
-
     lastDisplayUpdateInMilliSec = nowInMilliSec;
-    display.renderChannels(ch1, ch2, ch3,
-                           steeringInputResult.isEffectiveCarSteeringEnabled,
-                           isRemoteRequiredForDrive,
-                           hallThrottleRawValue, lcdStateText,
-                           escResult.value,
-                           steeringPulseInMicroSec,
-                           driveResult.driveDisplayLabel,
-                           driveResult.throttleSourceLabel);
-    lcd1602.render(currentSpeedInKiloMetersPerHour, batteryVoltageSnapshot);
+    const char* lcdStateText = systemState.resolveLcdStateText(
+        isRemoteRequiredForDrive, isRemoteThrottleSignalAvailableNow, nowInMilliSec);
+
+    OledDisplaySnapshot oledSnapshot = {
+        ch1,
+        ch2,
+        ch3,
+        steeringInputResult.isEffectiveCarSteeringEnabled,
+        isRemoteRequiredForDrive,
+        hallThrottleRawValue,
+        lcdStateText,
+        lastAppliedEscPulseInMicroSec,
+        steeringPulseInMicroSec,
+        driveResult.driveDisplayLabel,
+        driveResult.throttleSourceLabel};
+    display.render(oledSnapshot);
+
+    Lcd1602Snapshot lcdSnapshot = {speedSnapshot.speedInKiloMetersPerHour,
+                                   lastBatteryVoltageSnapshot};
+    lcd1602.render(lcdSnapshot);
   }
 }

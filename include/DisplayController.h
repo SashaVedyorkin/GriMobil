@@ -6,6 +6,7 @@
 #include <Wire.h>
 
 #include "AppConfig.h"
+#include "DisplaySnapshot.h"
 
 struct DisplayBeginResult {
   bool ok;
@@ -17,18 +18,10 @@ public:
   DisplayController();
 
   DisplayBeginResult begin();
-  void renderChannels(unsigned long ch1, unsigned long ch2, unsigned long ch3,
-                      bool isCarSteeringEnabled, bool isRemoteRequiredForDrive,
-                      int hallThrottleRawValue, const char* stateText);
-  void renderChannels(unsigned long ch1, unsigned long ch2, unsigned long ch3,
-                      bool isCarSteeringEnabled, bool isRemoteRequiredForDrive,
-                      int hallThrottleRawValue, const char* stateText,
-                      unsigned long escPulseInMicroSec, unsigned long steeringPulseInMicroSec,
-                      const char* custom, const char* throttleSourceLabel);
+  void render(const OledDisplaySnapshot& snapshot);
 
 private:
   Adafruit_SSD1306 display_;
-  int toPercent(unsigned long pulse) const;
   bool isSignalVisible(unsigned long pulse) const;
   const char* getModeDisplayLabel(bool isRemoteRequiredForDrive) const;
 };

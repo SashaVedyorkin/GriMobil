@@ -3,7 +3,8 @@
 #include <Arduino.h>
 
 #include "AppConfig.h"
-#include "SteeringCorrector.h"
+#include "SteeringControlModeController.h"
+#include "SteeringSourceArbitrator.h"
 
 struct SteeringInputResult {
   unsigned long pulseInMicroSec;
@@ -21,15 +22,8 @@ public:
 
 private:
   uint8_t potentiometerPin_;
-  SteeringCorrector& steeringCorrector_;
-  bool isCarSteeringEnabled_;
-  bool wasReceiverSteeringLockActive_;
+  SteeringControlModeController steeringControlModeController_;
+  SteeringSourceArbitrator steeringSourceArbitrator_;
 
   unsigned long readPotentiometerPulseInMicroSec() const;
-  long getOffsetFromCenterInMicroSec(unsigned long pulseInMicroSec) const;
-  unsigned long getMagnitudeInMicroSec(long offsetInMicroSec) const;
-  bool shouldUseReceiverSteering(unsigned long potentiometerPulseInMicroSec,
-                                 unsigned long receiverPulseInMicroSec) const;
-  bool isReceiverSteeringLockActive(unsigned long receiverLockPulseInMicroSec) const;
-  void updateSteeringControlMode(unsigned long receiverLockPulseInMicroSec);
 };

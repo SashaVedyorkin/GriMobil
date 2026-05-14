@@ -20,26 +20,6 @@ DisplayBeginResult DisplayController::begin() {
   return {true, nullptr};
 }
 
-void DisplayController::renderChannels(unsigned long ch1, unsigned long ch2, unsigned long ch3,
-                                       bool isCarSteeringEnabled,
-                                       bool isRemoteRequiredForDrive,
-                                       int hallThrottleRawValue,
-                                       const char* stateText) {
-  renderChannels(ch1, ch2, ch3, isCarSteeringEnabled, isRemoteRequiredForDrive,
-                 hallThrottleRawValue, stateText, 0, 0, "", "");
-}
-
-int DisplayController::toPercent(unsigned long pulse) const {
-  if (pulse < AppConfig::Display::kPercentMinPulseInMicroSec) {
-    pulse = AppConfig::Display::kPercentMinPulseInMicroSec;
-  }
-  if (pulse > AppConfig::Display::kPercentMaxPulseInMicroSec) {
-    pulse = AppConfig::Display::kPercentMaxPulseInMicroSec;
-  }
-  return map(pulse, AppConfig::Display::kPercentMinPulseInMicroSec,
-             AppConfig::Display::kPercentMaxPulseInMicroSec, 0, 100);
-}
-
 bool DisplayController::isSignalVisible(unsigned long pulse) const {
   return pulse > AppConfig::Display::kVisibleSignalMinInMicroSec &&
          pulse < AppConfig::Display::kVisibleSignalMaxInMicroSec;
@@ -50,56 +30,50 @@ const char* DisplayController::getModeDisplayLabel(bool isRemoteRequiredForDrive
                                   : AppConfig::Text::kDisplayModeNoCheck;
 }
 
-void DisplayController::renderChannels(unsigned long ch1, unsigned long ch2, unsigned long ch3,
-                                       bool isCarSteeringEnabled,
-                                       bool isRemoteRequiredForDrive,
-                                       int hallThrottleRawValue,
-                                       const char* stateText,
-                                       unsigned long escPulseInMicroSec,
-                                       unsigned long steeringPulseInMicroSec,
-                                       const char* custom,
-                                       const char* throttleSourceLabel) {
+void DisplayController::render(const OledDisplaySnapshot& snapshot) {
   display_.clearDisplay();
   display_.setCursor(0, 0);
   display_.print(AppConfig::Text::kLcdStateLabel);
   display_.print(" ");
-  display_.print(stateText);
+  display_.print(snapshot.stateText);
 
   display_.setCursor(0, 16);
   display_.print(AppConfig::Text::kChannel1Label);
-  if (isSignalVisible(ch1)) {
-    display_.print(ch1);
+  if (isSignalVisible(snapshot.ch1PulseInMicroSec)) {
+    display_.print(snapshot.ch1PulseInMicroSec);
   } else {
-    display_.print(throttleSourceLabel);
+    display_.print(snapshot.throttleSourceLabel);
   }
   display_.print(" ");
-  display_.print(escPulseInMicroSec);
+  display_.print(snapshot.escPulseInMicroSec);
   display_.print(" ");
-  display_.println(custom);
+  display_.println(snapshot.driveDisplayLabel);
 
   display_.setCursor(0, 32);
   display_.print(AppConfig::Text::kChannel2Label);
-  if (isSignalVisible(ch2)) {
-    display_.print(ch2);
+  if (isSignalVisible(snapshot.ch2PulseInMicroSec)) {
+    display_.print(snapshot.ch2PulseInMicroSec);
     display_.print(" ");
-    display_.print(steeringPulseInMicroSec);
+    display_.print(snapshot.steeringPulseInMicroSec);
     display_.print(" ");
-    display_.println(isCarSteeringEnabled ? AppConfig::Text::kDisplayCarSteering
-                                          : AppConfig::Text::kDisplayReceiverSteering);
+    display_.println(snapshot.isEffectiveCarSteeringEnabled
+                         ? AppConfig::Text::kDisplayCarSteering
+                         : AppConfig::Text::kDisplayReceiverSteering);
   } else {
     display_.print(AppConfig::Text::kShortNoSignal);
     display_.print(" ");
-    display_.print(steeringPulseInMicroSec);
+    display_.print(snapshot.steeringPulseInMicroSec);
     display_.print(" ");
-    display_.println(isCarSteeringEnabled ? AppConfig::Text::kDisplayCarSteering
-                                          : AppConfig::Text::kDisplayReceiverSteering);
+    display_.println(snapshot.isEffectiveCarSteeringEnabled
+                         ? AppConfig::Text::kDisplayCarSteering
+                         : AppConfig::Text::kDisplayReceiverSteering);
   }
 
   display_.setCursor(0, 48);
   display_.print(AppConfig::Text::kHallLabel);
-  display_.print(hallThrottleRawValue);
+  display_.print(snapshot.hallThrottleRawValue);
   display_.setCursor(110, 48);
-  display_.print(getModeDisplayLabel(isRemoteRequiredForDrive));
-  
+  display_.print(getModeDisplayLabel(snapshot.isRemoteRequiredForDrive));
+
   display_.display();
 }

@@ -3,6 +3,9 @@
 #include <Arduino.h>
 
 #include "AppConfig.h"
+#include "DriveModeController.h"
+#include "EscCommandShaper.h"
+#include "ThrottleArbitrator.h"
 
 struct DriveUpdateResult {
   const char* statusMessage;
@@ -17,34 +20,10 @@ public:
   DriveController();
 
   DriveUpdateResult update(int hallThrottleRawValue, unsigned long ch1PulseInMicroSec,
-                           unsigned long ch3PulseInMicroSec);
+                           unsigned long ch3PulseInMicroSec, bool isLocalControlsEnabled);
 
 private:
-  enum DriveMode {
-    kNeutral,
-    kForward,
-    kReverse
-  };
-
-  enum SwitchZone {
-    kDown,
-    kCenter,
-    kUp
-  };
-
-  DriveMode driveMode_;
-  SwitchZone lastSwitchZone_;
-  unsigned long lastEscPulseInMicroSec_;
-
-  SwitchZone detectSwitchZone(unsigned long ch3PulseInMicroSec) const;
-  void updateDriveMode(SwitchZone currentSwitchZone);
-  unsigned long mapThrottleToEsc(int hallThrottleRawValue) const;
-  unsigned long mapReceiverThrottleToEsc(unsigned long ch1PulseInMicroSec) const;
-  unsigned long selectThrottleTargetEscPulse(int hallThrottleRawValue,
-                                             unsigned long ch1PulseInMicroSec) const;
-  unsigned long quantizeEscPulse(unsigned long targetEscPulseInMicroSec) const;
-  unsigned long applyEscHysteresis(unsigned long targetEscPulseInMicroSec) const;
-  unsigned long smoothEscPulse(unsigned long targetEscPulseInMicroSec) const;
-  const char* getStatusMessage(bool isSignalValid) const;
-  const char* getDriveDisplayLabel() const;
+  DriveModeController driveModeController_;
+  ThrottleArbitrator throttleArbitrator_;
+  EscCommandShaper escCommandShaper_;
 };

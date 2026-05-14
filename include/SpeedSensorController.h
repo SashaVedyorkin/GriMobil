@@ -11,7 +11,7 @@ struct SpeedSensorSnapshot {
 
 class SpeedSensorController {
 public:
-  explicit SpeedSensorController(uint8_t pin);
+  SpeedSensorController();
 
   void begin();
   SpeedSensorSnapshot read() const;
@@ -20,7 +20,6 @@ public:
 private:
   static SpeedSensorController* instance_;
 
-  uint8_t pin_;
   volatile bool isActive_;
   volatile bool lastLevelHigh_;
   volatile unsigned long lastPulseAtInMicroSec_;
