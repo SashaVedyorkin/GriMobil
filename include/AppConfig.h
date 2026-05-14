@@ -33,6 +33,7 @@ static const unsigned long kPulseTimeoutInMicroSec = 25000;
 static const unsigned long kSignalTimeoutInMicroSec = 100000;
 static const unsigned long kSignalMinInMicroSec = 1100;
 static const unsigned long kSignalMaxInMicroSec = 2000;
+static const uint8_t kMedianFilterSampleCount = 5;
 }  // namespace Rc
 
 namespace Esc {

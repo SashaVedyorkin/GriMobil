@@ -7,6 +7,7 @@
 #include "DriveModeButtonController.h"
 #include "EscController.h"
 #include "Lcd1602Controller.h"
+#include "MedianFilter.h"
 #include "RcInputController.h"
 #include "RcSignalValidator.h"
 #include "SerialController.h"
@@ -45,6 +46,8 @@ RcSignalValidator rcSignalValidator;
 unsigned long lastMotorUpdateInMilliSec = 0;
 unsigned long lastDisplayUpdateInMilliSec = 0;
 unsigned long lastSerialUpdateInMilliSec = 0;
+MedianFilter<AppConfig::Rc::kMedianFilterSampleCount> ch1MedianFilter;
+MedianFilter<AppConfig::Rc::kMedianFilterSampleCount> ch2MedianFilter;
 
 namespace {
 bool readDriveSafetyToggle() {
@@ -76,8 +79,6 @@ void setup() {
     serialMonitor.logLine(displayStatus.message);
     while (true) {}
   }
-
-  serialMonitor.logLine(AppConfig::Text::kRcMonitorStarted);
 }
 
 void loop() {
@@ -91,6 +92,8 @@ void loop() {
   ch2 = rcState.ch2;
   ch3 = rcState.ch3;
   ch4 = rcState.ch4;
+  ch1 = ch1MedianFilter.apply(ch1);
+  ch2 = ch2MedianFilter.apply(ch2);
   isRemoteRequiredForDrive = readDriveSafetyToggle();
   isTrackSensorActive = speedSnapshot.isActive;
   currentSpeedInKiloMetersPerHour = speedSnapshot.speedInKiloMetersPerHour;
