@@ -7,6 +7,7 @@
 
 #include "AppConfig.h"
 #include "DisplaySnapshot.h"
+#include "OledDisplayStrategy.h"
 
 struct DisplayBeginResult {
   bool ok;
@@ -22,6 +23,7 @@ public:
 
 private:
   Adafruit_SSD1306 display_;
-  bool isSignalVisible(unsigned long pulse) const;
-  const char* getModeDisplayLabel(bool isRemoteRequiredForDrive) const;
+  DebugOledDisplayStrategy debugStrategy_;
+  UserOledDisplayStrategy userStrategy_;
+  const OledDisplayStrategy* activeStrategy_;
 };

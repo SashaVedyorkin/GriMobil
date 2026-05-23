@@ -5,6 +5,7 @@
 
 #include "AppConfig.h"
 #include "DisplaySnapshot.h"
+#include "Lcd1602DisplayStrategy.h"
 
 class Lcd1602Controller {
 public:
@@ -15,6 +16,9 @@ public:
 
 private:
   LiquidCrystal_I2C lcd_;
+  DebugLcd1602DisplayStrategy debugStrategy_;
+  UserLcd1602DisplayStrategy userStrategy_;
+  const Lcd1602DisplayStrategy* activeStrategy_;
   char lastSpeedLine_[17];
   char lastVoltageLine_[17];
 };

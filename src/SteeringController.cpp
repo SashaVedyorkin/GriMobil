@@ -10,7 +10,7 @@ unsigned long constrainValue(unsigned long value, unsigned long minValue, unsign
   }
   return value;
 }
-}  // namespace
+}
 
 SteeringController::SteeringController(uint8_t pin)
     : pin_(pin),

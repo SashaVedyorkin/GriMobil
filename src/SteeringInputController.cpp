@@ -1,9 +1,7 @@
 #include "SteeringInputController.h"
 
-SteeringInputController::SteeringInputController(uint8_t potentiometerPin,
-                                                 SteeringCorrector& steeringCorrector)
-    : potentiometerPin_(potentiometerPin),
-      steeringSourceArbitrator_(steeringCorrector) {}
+SteeringInputController::SteeringInputController(uint8_t potentiometerPin)
+    : potentiometerPin_(potentiometerPin) {}
 
 void SteeringInputController::begin() {
   pinMode(potentiometerPin_, INPUT);
@@ -18,7 +16,8 @@ SteeringInputResult SteeringInputController::resolve(unsigned long receiverSteer
   SteeringSourceSelection selection = steeringSourceArbitrator_.select(
       potentiometerPulseInMicroSec, receiverSteeringPulseInMicroSec,
       steeringControlModeController_.isCarSteeringEnabled(), isRemoteRequiredForDrive);
-  return {selection.pulseInMicroSec, selection.isEffectiveCarSteeringEnabled};
+  return {selection.pulseInMicroSec, potentiometerPulseInMicroSec,
+          selection.isEffectiveCarSteeringEnabled};
 }
 
 unsigned long SteeringInputController::readPotentiometerPulseInMicroSec() const {

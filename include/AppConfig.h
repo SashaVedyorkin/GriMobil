@@ -15,7 +15,9 @@ static const uint8_t kHallThrottleSensor = A12;
 static const uint8_t kDriveForwardButton = A13;
 static const uint8_t kDriveReverseButton = A14;
 static const uint8_t kSteeringPotentiometer = A8;
-}  // namespace Pins
+static const uint8_t kFrontLightOutput = 22;
+static const uint8_t kFrontLightToggle = 28;
+}
 
 namespace Pca9685 {
 static const uint8_t kI2cAddress = 0x40;
@@ -23,7 +25,7 @@ static const uint8_t kSteeringChannel = 0;
 static const uint8_t kEscChannel = 1;
 static const uint16_t kPwmFrequencyInHertz = 50;
 static const uint16_t kPwmResolution = 4096;
-}  // namespace Pca9685
+}
 
 namespace Rc {
 static const unsigned long kDefaultPulseInMicroSec = 1500;
@@ -34,14 +36,14 @@ static const unsigned long kSignalTimeoutInMicroSec = 100000;
 static const unsigned long kSignalMinInMicroSec = 1100;
 static const unsigned long kSignalMaxInMicroSec = 2000;
 static const uint8_t kMedianFilterSampleCount = 5;
-}  // namespace Rc
+}
 
 namespace Esc {
 static const int kNeutralPulseInMicroSec = 1500;
 static const int kSignalMinInMicroSec = 1000;
 static const int kSignalMaxInMicroSec = 2000;
 static const unsigned long kStartupDelayInMilliSec = 1000;
-}  // namespace Esc
+}
 
 namespace Drive {
 static const unsigned long kForwardSwitchThresholdInMicroSec = 1700;
@@ -54,12 +56,12 @@ static const unsigned long kEscStepInMicroSec = 10;
 static const unsigned long kEscHysteresisInMicroSec = 8;
 static const unsigned long kEscRampStepInMicroSec = 8;
 static const unsigned long kEscFastStopRampStepInMicroSec = 40;
-}  // namespace Drive
+}
 
 namespace HallThrottle {
 static const int kUpperPointRaw = 509;
 static const int kLowerPointRaw = 350;
-}  // namespace HallThrottle
+}
 
 namespace Steering {
 static const unsigned long kInputCenterInMicroSec = 1580;
@@ -75,12 +77,12 @@ static const unsigned long kOutputCenterInMicroSec = 1500;
 static const unsigned long kOutputLeftMaxInMicroSec = 2000;
 static const unsigned long kOutputRightMaxInMicroSec = 1000;
 static const unsigned long kStartupDelayInMilliSec = 300;
-}  // namespace Steering
+}
 
 namespace Potentiometer {
 static const int kAnalogMin = 0;
 static const int kAnalogMax = 1023;
-}  // namespace Potentiometer
+}
 
 namespace Battery {
 static const float kReferenceVoltage = 5.0f;
@@ -88,36 +90,39 @@ static const float kUpperDividerResistorInOhm = 30000.0f;
 static const float kLowerDividerResistorInOhm = 10000.0f;
 static const int kMinDetectedAdcValue = 5;
 static const uint8_t kSampleCount = 16;
-}  // namespace Bat
+static const float kChargeMinVoltageInVolts = 9.0f;
+static const float kChargeMaxVoltageInVolts = 14.5f;
+}
 
 namespace Display {
 static const int kScreenWidth = 128;
 static const int kScreenHeight = 64;
 static const int kOledReset = -1;
 static const int kI2cAddress = 0x3C;
+static const bool kDebugMode = true;
 static const unsigned long kStartupDelayInMilliSec = 1000;
 static const unsigned long kPercentMinPulseInMicroSec = 1000;
 static const unsigned long kPercentMaxPulseInMicroSec = 2000;
 static const unsigned long kVisibleSignalMinInMicroSec = 900;
 static const unsigned long kVisibleSignalMaxInMicroSec = 2200;
-}  // namespace OLED
+}
 
 namespace Lcd1602 {
 static const uint8_t kColumns = 16;
 static const uint8_t kRows = 2;
 static const uint8_t kI2cAddress = 0x27;
 static const unsigned long kCh1NoSignalHoldInMilliSec = 5000;
-}  // namespace 1602
+}
 
 namespace Speedometer {
 static const float kWheelCircumferenceInCentiMeter = 74.0f;
 static const uint8_t kPulsesPerWheelRotation = 6;
 static const unsigned long kKeepLastSpeedTimeoutInMicroSec = 1500000;
-}  // namespace Speedometer
+}
 
 namespace Serial {
 static const unsigned long kBaudRate = 9600;
-}  // namespace Serial Debug
+}
 
 namespace Text {
 static const char kStartupMonitorTitle[] = "GriMobil started";
@@ -155,12 +160,24 @@ static const char kLcdStateCorrect[] = "Correct";
 static const char kLcdStateCh1NoSignal[] = "nosig";
 static const char kLcdStateNoCheckMode[] = "no-check mode";
 static const char kShortNoSignal[] = "NS";
-}  // Text
+static const char kAnnouncementLightOn[] = "LIGHT ON";
+static const char kAnnouncementLightOff[] = "LIGHT OFF";
+static const char kAnnouncementRccMode[] = "RCC MODE";
+static const char kAnnouncementNoRemote[] = "NO REMOTE";
+static const char kAnnouncementLowBattery[] = "LOW BATTERY";
+static const char kAnnouncementDrive[] = "DRIVE";
+static const char kAnnouncementNeutral[] = "NEUTRAL";
+static const char kAnnouncementReverse[] = "REVERSE";
+}
 
 namespace MainLoop {
 static const unsigned long kMotorUpdateIntervalInMilliSec = 5;
 static const unsigned long kDisplayUpdateIntervalInMilliSec = 50;
 static const unsigned long kBatteryUpdateIntervalInMilliSec = 50;
 static const unsigned long kSerialUpdateIntervalInMilliSec = 100;
-}  // Main
+}
+
+namespace Announcement {
+static const unsigned long kTemporaryDisplayDurationInMilliSec = 3000;
+}
 }

@@ -26,7 +26,7 @@ void handleInterruptSlot3() {
     g_interruptStrategies[3]->handleInterrupt();
   }
 }
-}  // namespace
+}
 
 InterruptChannelReadStrategy::InterruptChannelReadStrategy(uint8_t pin, uint8_t slot)
     : pin_(pin),

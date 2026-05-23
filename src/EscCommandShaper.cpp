@@ -10,7 +10,7 @@ unsigned long constrainPulse(unsigned long value, unsigned long minValue, unsign
   }
   return value;
 }
-}  // namespace
+}
 
 EscCommandShaper::EscCommandShaper()
     : lastEscPulseInMicroSec_(AppConfig::Esc::kNeutralPulseInMicroSec) {}

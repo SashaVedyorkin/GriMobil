@@ -10,7 +10,7 @@ bool isNeutralSample(unsigned long pulseInMicroSec) {
 
   return deltaFromCenterInMicroSec <= neutralWindowInMicroSec;
 }
-}  // namespace
+}
 
 SteeringCorrector::SteeringCorrector() : sampleCount_(0), nextIndex_(0) {
   reset();

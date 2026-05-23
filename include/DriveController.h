@@ -8,6 +8,7 @@
 #include "ThrottleArbitrator.h"
 
 struct DriveUpdateResult {
+  DriveModeController::DriveMode driveMode;
   const char* statusMessage;
   const char* driveDisplayLabel;
   const char* throttleSourceLabel;

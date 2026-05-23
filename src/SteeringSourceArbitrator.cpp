@@ -1,8 +1,5 @@
 #include "SteeringSourceArbitrator.h"
 
-SteeringSourceArbitrator::SteeringSourceArbitrator(SteeringCorrector& steeringCorrector)
-    : steeringCorrector_(steeringCorrector) {}
-
 SteeringSourceSelection SteeringSourceArbitrator::select(
     unsigned long potentiometerPulseInMicroSec, unsigned long receiverSteeringPulseInMicroSec,
     bool isCarSteeringEnabled, bool isRemoteRequiredForDrive) {
@@ -10,25 +7,20 @@ SteeringSourceSelection SteeringSourceArbitrator::select(
   bool isReceiverSteeringForced =
       !isCarSteeringEnabled || (isRemoteRequiredForDrive && !isRemoteSteeringSignalAvailable);
 
-  unsigned long steeringInputPulseInMicroSec = AppConfig::Steering::kInputCenterInMicroSec;
-
   if (isReceiverSteeringForced) {
     if (receiverSteeringPulseInMicroSec != 0) {
-      steeringInputPulseInMicroSec = steeringCorrector_.apply(receiverSteeringPulseInMicroSec);
-    } else {
-      steeringCorrector_.reset();
+      return {receiverSteeringPulseInMicroSec, false};
     }
-  } else {
-    steeringCorrector_.reset();
-    steeringInputPulseInMicroSec = potentiometerPulseInMicroSec;
 
-    if (shouldUseReceiverSteering(potentiometerPulseInMicroSec,
-                                  receiverSteeringPulseInMicroSec)) {
-      steeringInputPulseInMicroSec = receiverSteeringPulseInMicroSec;
-    }
+    return {AppConfig::Steering::kInputCenterInMicroSec, false};
   }
 
-  return {steeringInputPulseInMicroSec, !isReceiverSteeringForced};
+  if (isRemoteSteeringSignalAvailable &&
+      shouldUseReceiverSteering(potentiometerPulseInMicroSec, receiverSteeringPulseInMicroSec)) {
+    return {receiverSteeringPulseInMicroSec, true};
+  }
+
+  return {potentiometerPulseInMicroSec, true};
 }
 
 long SteeringSourceArbitrator::getOffsetFromCenterInMicroSec(unsigned long pulseInMicroSec) const {

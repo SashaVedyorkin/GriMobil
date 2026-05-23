@@ -16,7 +16,7 @@ float calculateSpeedInKiloMetersPerHour(unsigned long pulseIntervalInMicroSec) {
 
   return wheelCircumferenceInKiloMeter * revolutionsPerHour;
 }
-}  // namespace
+}
 
 SpeedSensorController::SpeedSensorController()
     : isActive_(false),

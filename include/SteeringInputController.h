@@ -8,12 +8,13 @@
 
 struct SteeringInputResult {
   unsigned long pulseInMicroSec;
+  unsigned long potentiometerPulseInMicroSec;
   bool isEffectiveCarSteeringEnabled;
 };
 
 class SteeringInputController {
 public:
-  SteeringInputController(uint8_t potentiometerPin, SteeringCorrector& steeringCorrector);
+  explicit SteeringInputController(uint8_t potentiometerPin);
 
   void begin();
   SteeringInputResult resolve(unsigned long receiverSteeringPulseInMicroSec,

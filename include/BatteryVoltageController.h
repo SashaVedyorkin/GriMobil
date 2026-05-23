@@ -15,6 +15,7 @@ public:
 
   void begin();
   BatteryVoltageSnapshot read() const;
+  static uint8_t calculateChargePercent(const BatteryVoltageSnapshot& batteryVoltage);
 
 private:
   uint8_t pin_;
