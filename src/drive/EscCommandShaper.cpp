@@ -17,12 +17,7 @@ EscCommandShaper::EscCommandShaper()
 
 unsigned long EscCommandShaper::apply(unsigned long targetEscPulseInMicroSec) {
   unsigned long quantizedEscPulseInMicroSec = applyEscHysteresis(targetEscPulseInMicroSec);
-  unsigned long smoothEscPulseInMicroSec = smoothEscPulse(quantizedEscPulseInMicroSec);
-  lastEscPulseInMicroSec_ = smoothEscPulseInMicroSec;
-  return lastEscPulseInMicroSec_;
-}
-
-unsigned long EscCommandShaper::lastAppliedPulseInMicroSec() const {
+  lastEscPulseInMicroSec_ = quantizedEscPulseInMicroSec;
   return lastEscPulseInMicroSec_;
 }
 
@@ -56,30 +51,4 @@ unsigned long EscCommandShaper::applyEscHysteresis(unsigned long targetEscPulseI
   }
 
   return quantizeEscPulse(targetEscPulseInMicroSec);
-}
-
-unsigned long EscCommandShaper::smoothEscPulse(unsigned long targetEscPulseInMicroSec) const {
-  if (targetEscPulseInMicroSec == lastEscPulseInMicroSec_) {
-    return lastEscPulseInMicroSec_;
-  }
-
-  unsigned long rampStepInMicroSec =
-      targetEscPulseInMicroSec == AppConfig::Esc::kNeutralPulseInMicroSec
-          ? AppConfig::Drive::kEscFastStopRampStepInMicroSec
-          : AppConfig::Drive::kEscRampStepInMicroSec;
-
-  unsigned long deltaInMicroSec =
-      targetEscPulseInMicroSec > lastEscPulseInMicroSec_
-          ? targetEscPulseInMicroSec - lastEscPulseInMicroSec_
-          : lastEscPulseInMicroSec_ - targetEscPulseInMicroSec;
-
-  if (deltaInMicroSec <= rampStepInMicroSec) {
-    return targetEscPulseInMicroSec;
-  }
-
-  if (targetEscPulseInMicroSec > lastEscPulseInMicroSec_) {
-    return lastEscPulseInMicroSec_ + rampStepInMicroSec;
-  }
-
-  return lastEscPulseInMicroSec_ - rampStepInMicroSec;
 }

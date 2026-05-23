@@ -54,8 +54,6 @@ static const unsigned long kForwardEscMaxInMicroSec = 2000;
 static const unsigned long kReverseEscMinInMicroSec = 1000;
 static const unsigned long kEscStepInMicroSec = 10;
 static const unsigned long kEscHysteresisInMicroSec = 8;
-static const unsigned long kEscRampStepInMicroSec = 8;
-static const unsigned long kEscFastStopRampStepInMicroSec = 40;
 }
 
 namespace HallThrottle {
