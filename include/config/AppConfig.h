@@ -16,6 +16,7 @@ static const uint8_t kDriveForwardButton = A13;
 static const uint8_t kDriveReverseButton = A14;
 static const uint8_t kSteeringPotentiometer = A8;
 static const uint8_t kFrontLightOutput = 22;
+static const uint8_t kRearLightOutput = 24;
 static const uint8_t kFrontLightToggle = 28;
 }
 
@@ -57,8 +58,8 @@ static const unsigned long kEscHysteresisInMicroSec = 8;
 }
 
 namespace HallThrottle {
-static const int kUpperPointRaw = 509;
-static const int kLowerPointRaw = 350;
+static const int kLowerPointRaw = 520;
+static const int kUpperPointRaw = 850;
 }
 
 namespace Steering {
@@ -116,6 +117,10 @@ namespace Speedometer {
 static const float kWheelCircumferenceInCentiMeter = 74.0f;
 static const uint8_t kPulsesPerWheelRotation = 6;
 static const unsigned long kKeepLastSpeedTimeoutInMicroSec = 1500000;
+}
+
+namespace BrakeLight {
+static constexpr float kStoppedSpeedThresholdInKiloMetersPerHour = 0.01f;
 }
 
 namespace Serial {

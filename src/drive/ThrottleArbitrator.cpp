@@ -48,14 +48,14 @@ unsigned long ThrottleArbitrator::mapHallThrottleToEsc(
   }
 
   if (driveMode == DriveModeController::kForward) {
-    return map(constrainedHallThrottleRawValue, AppConfig::HallThrottle::kUpperPointRaw,
-               AppConfig::HallThrottle::kLowerPointRaw,
+    return map(constrainedHallThrottleRawValue, AppConfig::HallThrottle::kLowerPointRaw,
+               AppConfig::HallThrottle::kUpperPointRaw,
                AppConfig::Esc::kNeutralPulseInMicroSec,
                AppConfig::Drive::kForwardEscMaxInMicroSec);
   }
 
-  return map(constrainedHallThrottleRawValue, AppConfig::HallThrottle::kUpperPointRaw,
-             AppConfig::HallThrottle::kLowerPointRaw,
+  return map(constrainedHallThrottleRawValue, AppConfig::HallThrottle::kLowerPointRaw,
+             AppConfig::HallThrottle::kUpperPointRaw,
              AppConfig::Esc::kNeutralPulseInMicroSec,
              AppConfig::Drive::kReverseEscMinInMicroSec);
 }

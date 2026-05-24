@@ -2,6 +2,7 @@
 #include <Wire.h>
 #include "AppConfig.h"
 #include "BatteryVoltageController.h"
+#include "BrakeLightController.h"
 #include "DisplayController.h"
 #include "DisplaySnapshot.h"
 #include "DriveController.h"
@@ -33,6 +34,8 @@ DriveController drive;
 EscController esc(AppConfig::Pca9685::kEscChannel);
 SteeringController steering(AppConfig::Pca9685::kSteeringChannel);
 LightController frontLight(AppConfig::Pins::kFrontLightOutput);
+LightController rearLight(AppConfig::Pins::kRearLightOutput);
+BrakeLightController brakeLight;
 SpeedSensorController speedSensor;
 BatteryVoltageController batteryVoltage(AppConfig::Pins::kBatteryVoltage);
 SteeringInputController steeringInput(AppConfig::Pins::kSteeringPotentiometer);
@@ -95,6 +98,7 @@ void setup() {
   esc.begin();
   steering.begin();
   frontLight.begin();
+  rearLight.begin();
   lcd1602.begin();
   DisplayBeginResult displayStatus = display.begin();
 
@@ -177,6 +181,8 @@ void loop() {
     EscUpdateResult escResult = esc.update(driveResult.escPulseInMicroSec);
     lastAppliedEscPulseInMicroSec = escResult.value;
   }
+  rearLight.setEnabled(
+      brakeLight.update(lastAppliedEscPulseInMicroSec, speedSnapshot.speedInKiloMetersPerHour));
 
   if (nowInMilliSec - lastBatteryUpdateInMilliSec >=
       AppConfig::MainLoop::kBatteryUpdateIntervalInMilliSec) {
